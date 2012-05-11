@@ -1,7 +1,16 @@
 {
-	"color_scheme": "Packages/Color Scheme - DobDark/Dobdark Soda.tmTheme",
-	"default_line_ending": "unix",
-	"font_face": "Cousine",
-	"font_size": 9,
-	"theme": "Soda Dark.sublime-theme"
+	// Themes
+    "color_scheme": "Packages/Color Scheme - DobDark/Dobdark Soda.tmTheme",
+	"theme": "Soda Dark.sublime-theme",
+    
+    // Fonts [http://www.google.com/webfonts/specimen/Cousine]
+    "font_face": "Cousine",
+    "font_size": 9,
+
+    // Tab Settings
+    "tab_size": 4,
+    "translate_tabs_to_spaces": true,
+
+    // Line endings
+    "default_line_ending": "unix"
 }
