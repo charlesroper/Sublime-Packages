@@ -3,6 +3,7 @@
 	"installed_packages":
 	[
 		"Gist",
+		"Markdown Preview",
 		"Package Control",
 		"SCSS",
 		"SublimeGoogle",
