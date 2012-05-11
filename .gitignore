@@ -1,0 +1,10 @@
+*.pyc
+*.cache
+*.sublime-project
+*.DS_Store
+SublimeCodeIntel
+*History.sublime-settings
+numberIncrement
+User/UntitledFiles
+User/SFTP.sublime-settings
+User/Gist.sublime-settings
