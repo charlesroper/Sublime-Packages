@@ -1,5 +1,5 @@
 {
-	"auto_upgrade_last_run": 1337072687,
+	"auto_upgrade_last_run": 1337091110,
 	"installed_packages":
 	[
 		"Bullet",
@@ -9,6 +9,7 @@
 		"Package Control",
 		"SCSS",
 		"SublimeGoogle",
+		"Terminal",
 		"Theme - Soda",
 		"VBScript",
 		"ZenCoding"
