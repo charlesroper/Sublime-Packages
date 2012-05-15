@@ -1,9 +1,10 @@
 {
-	"auto_upgrade_last_run": 1336774855,
+	"auto_upgrade_last_run": 1337072687,
 	"installed_packages":
 	[
 		"Bullet",
 		"Gist",
+		"LiveReload",
 		"Markdown Preview",
 		"Package Control",
 		"SCSS",
