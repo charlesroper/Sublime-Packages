@@ -1,9 +1,5 @@
 {
-<<<<<<< HEAD
-	"auto_upgrade_last_run": 1337183346,
-=======
 	"auto_upgrade_last_run": 1337128173,
->>>>>>> 623f097... Ruby tab-size to 2 spaces
 	"installed_packages":
 	[
 		"Bullet",
