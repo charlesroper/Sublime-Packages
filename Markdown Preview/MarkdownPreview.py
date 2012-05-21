@@ -3,6 +3,7 @@ import desktop
 import tempfile
 import markdown
 import os
+import re
 
 
 def getTempMarkdownPreviewPath(view):
@@ -20,7 +21,7 @@ class MarkdownPreviewListener(sublime_plugin.EventListener):
             temp_file = getTempMarkdownPreviewPath(view)
             if os.path.isfile(temp_file):
                 # reexec markdown conversion
-                view.run_command('markdown_preview', {'target': 'browser'})
+                view.run_command('markdown_preview', {'target': 'disk'})
 
 
 class MarkdownPreviewCommand(sublime_plugin.TextCommand):
@@ -38,6 +39,20 @@ class MarkdownPreviewCommand(sublime_plugin.TextCommand):
 
         return open(css_path, 'r').read().decode('utf-8')
 
+    def postprocessor(self, html):
+        # fix relative images paths
+        def img_fix(match):
+            img, src = match.groups()
+            filename = self.view.file_name()
+            if filename:
+                if not src.startswith(('file://', 'http://', '/')):
+                    abs_path = u'file://%s/%s' % (os.path.dirname(filename), src)
+                    img = img.replace(src, abs_path)
+            return img
+        RE_IMGS = re.compile("""(?P<img><img[^>]+src=["'](?P<src>[^"']+)[^>]*>)""")
+        html = RE_IMGS.sub(img_fix, html)
+        return html
+
     def run(self, edit, target='browser'):
         region = sublime.Region(0, self.view.size())
         encoding = self.view.encoding()
@@ -50,13 +65,20 @@ class MarkdownPreviewCommand(sublime_plugin.TextCommand):
         # convert the markdown
         markdown_html = markdown.markdown(contents)
 
+        # postprocess the html
+        markdown_html = self.postprocessor(markdown_html)
+        # check if LiveReload ST2 extension installed
+        livereload_installed = ('LiveReload' in os.listdir(sublime.packages_path()))
+
         # build the html
-        html_contents = u'<html><head><meta charset="%s">' % encoding
+        html_contents = u'<!DOCTYPE html>'
+        html_contents += '<html><head><meta charset="%s">' % encoding
         styles = self.getCSS()
         html_contents += '<style>%s</style>' % styles
+        if livereload_installed:
+            html_contents += '<script>document.write(\'<script src="http://\' + (location.host || \'localhost\').split(\':\')[0] + \':35729/livereload.js?snipver=1"></\' + \'script>\')</script>'
         html_contents += '</head><body>'
         html_contents += markdown_html
-        html_contents += '<script>document.write(\'<script src="http://\' + (location.host || \'localhost\').split(\':\')[0] + \':35729/livereload.js?snipver=1"></\' + \'script>\')</script>'
         html_contents += '</body>'
 
         if target in ['disk', 'browser']:
