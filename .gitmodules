@@ -4,3 +4,6 @@
 [submodule "ExtremeCSS"]
 	path = ExtremeCSS
 	url = https://github.com/grassator/ExtremeCSS.tmbundle.git
+[submodule "Theme - Nil"]
+	path = Theme - Nil
+	url = https://github.com/nilium/st2-nil-theme.git
