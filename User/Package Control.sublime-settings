@@ -1,5 +1,5 @@
 {
-	"auto_upgrade_last_run": 1337616608,
+	"auto_upgrade_last_run": 1338296777,
 	"installed_packages":
 	[
 		"Bullet",
@@ -9,6 +9,7 @@
 		"Package Control",
 		"PowerShell",
 		"SCSS",
+		"SideBarEnhancements",
 		"SublimeGoogle",
 		"Terminal",
 		"Theme - Soda",
