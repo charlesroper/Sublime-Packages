@@ -667,6 +667,7 @@
                 ]
             },
             { "command": "build", "mnemonic": "B" },
+            { "command": "build", "args": {"variant": "Run"}, "mnemonic": "R" },
             { "command": "exec", "args": {"kill": true}, "caption": "Cancel Build", "mnemonic": "C" },
             {
                 "caption": "Build Results",
