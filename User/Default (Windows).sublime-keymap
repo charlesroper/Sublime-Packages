@@ -10,6 +10,11 @@
 		  { "key": "selection_empty", "operator": "equal", "operand": false, "match_all": true }
 	   ]
 	},
+	{ "keys": ["`"], "command": "insert_snippet", "args": {"contents": "`${0:$SELECTION}`"}, "context":
+	   [
+		  { "key": "selection_empty", "operator": "equal", "operand": false, "match_all": true }
+	   ]
+	},
 
 	// Auto-pair asterisks in Markdown
 	{ "keys": ["*"], "command": "insert_snippet", "args": {"contents": "*$0*"}, "context":
