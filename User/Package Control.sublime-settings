@@ -1,9 +1,10 @@
 {
-	"auto_upgrade_last_run": 1338296777,
+	"auto_upgrade_last_run": 1339708198,
 	"installed_packages":
 	[
 		"Bullet",
 		"Gist",
+		"LineEndings",
 		"LiveReload",
 		"Markdown Preview",
 		"Package Control",
