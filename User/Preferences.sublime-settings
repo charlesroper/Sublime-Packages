@@ -12,5 +12,6 @@
     "translate_tabs_to_spaces": true,
 
     // Line endings
-    "default_line_ending": "unix"
+    "default_line_ending": "unix",
+    "trim_trailing_white_space_on_save": true
 }
