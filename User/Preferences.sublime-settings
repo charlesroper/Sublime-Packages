@@ -2,7 +2,7 @@
 	// Themes
     "color_scheme": "Packages/Color Scheme - DobDark/Dobdark Soda.tmTheme",
 	"theme": "Nil.sublime-theme",
-    
+
     // Fonts [http://www.google.com/webfonts/specimen/Cousine]
     "font_face": "Cousine",
     "font_size": 9,
@@ -13,5 +13,7 @@
 
     // Line endings
     "default_line_ending": "unix",
-    "trim_trailing_white_space_on_save": true
+    "trim_trailing_white_space_on_save": true,
+
+    "ignored_packages": [""]
 }
