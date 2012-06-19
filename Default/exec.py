@@ -59,7 +59,7 @@ class AsyncProcess(object):
     def kill(self):
         if not self.killed:
             self.killed = True
-            self.proc.kill()
+            self.proc.terminate()
             self.listener = None
 
     def poll(self):
