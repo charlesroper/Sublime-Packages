@@ -127,13 +127,7 @@ if int(sublime.version()) >= 2092:
 
 ################################### ARBITRAGE ##################################
 
-try:
-    arbited
-except NameError:
-    arbited = True
-    if zen_settings.get('zenarbitrage'):
-        from zenarbitrage import doop
-        doop()
+
 
 ######################## REMOVE HTML/HTML_COMPLETIONS.PY #######################
 
