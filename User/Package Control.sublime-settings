@@ -1,7 +1,8 @@
 {
-	"auto_upgrade_last_run": 1339708198,
+	"auto_upgrade_last_run": 1340921585,
 	"installed_packages":
 	[
+		"AAAPackageDev",
 		"Bullet",
 		"Gist",
 		"Git",
