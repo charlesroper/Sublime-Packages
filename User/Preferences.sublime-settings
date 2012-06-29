@@ -17,5 +17,6 @@
 
     "ignored_packages": [""],
     "draw_indent_guides": false,
+    // "indent_guide_options": ["draw_active"],
     "draw_white_space": "all"
 }
