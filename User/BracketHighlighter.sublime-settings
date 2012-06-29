@@ -6,9 +6,9 @@
     "angle_scope" : "bracket.angle",
     "tag_scope"   : "bracket.tag",
     "quote_style" : "solid",
-    "curly_style" : "outline",
+    "curly_style" : "underline",
     "round_style" : "outline",
     "square_style": "outline",
     "angle_style" : "outline",
-    "tag_style"   : "outline"
+    "tag_style"   : "none"
 }
