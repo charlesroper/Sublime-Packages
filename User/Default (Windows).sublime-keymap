@@ -1,5 +1,8 @@
 [
-// 
+
+{ "keys": ["ctrl+alt+t"], "command": "open_terminal" },
+{ "keys": ["ctrl+shift+alt+t"], "command": "open_terminal_project_folder" },
+//
 	{ "keys": ["*"], "command": "insert_snippet", "args": {"contents": "*${0:$SELECTION}*"}, "context":
 	   [
 		  { "key": "selection_empty", "operator": "equal", "operand": false, "match_all": true }
