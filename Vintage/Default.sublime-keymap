@@ -1,5 +1,5 @@
 [
-	{ "keys": ["escape"], "command": "exit_insert_mode",
+	{ "keys": ["super+["], "command": "exit_insert_mode",
 		"context":
 		[
 			{ "key": "setting.command_mode", "operand": false },
@@ -30,7 +30,7 @@
 		]
 	},
 
-	{ "keys": ["ctrl+["], "command": "exit_insert_mode",
+	{ "keys": ["super+["], "command": "exit_insert_mode",
 		"context":
 		[
 			{ "key": "setting.command_mode", "operand": false },
@@ -39,7 +39,7 @@
 		]
 	},
 
-	{ "keys": ["ctrl+["], "command": "exit_visual_mode",
+	{ "keys": ["super+["], "command": "exit_visual_mode",
 		"context":
 		[
 			{ "key": "setting.command_mode"},
@@ -49,7 +49,7 @@
 		]
 	},
 
-	{ "keys": ["ctrl+["], "command": "vi_cancel_current_action", "context":
+	{ "keys": ["super+["], "command": "vi_cancel_current_action", "context":
 		[
 			{ "key": "setting.command_mode" },
 			{ "key": "vi_has_input_state" },
