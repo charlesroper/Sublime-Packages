@@ -3,6 +3,7 @@
 	"installed_packages":
 	[
 		"AAAPackageDev",
+		"BracketHighlighter",
 		"Bullet",
 		"Gist",
 		"Git",
