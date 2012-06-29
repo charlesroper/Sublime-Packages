@@ -15,5 +15,7 @@
     "default_line_ending": "unix",
     "trim_trailing_white_space_on_save": true,
 
-    "ignored_packages": [""]
+    "ignored_packages": [""],
+    "draw_indent_guides": false,
+    "draw_white_space": "all"
 }
