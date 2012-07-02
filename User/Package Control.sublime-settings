@@ -3,6 +3,7 @@
 	"installed_packages":
 	[
 		"AAAPackageDev",
+		"AutoFileName",
 		"BracketHighlighter",
 		"Bullet",
 		"Gist",
