@@ -1,8 +1,7 @@
 {
-	"auto_upgrade_last_run": 1340921585,
+	"auto_upgrade_last_run": 1341247710,
 	"installed_packages":
 	[
-		"AAAPackageDev",
 		"AutoFileName",
 		"BracketHighlighter",
 		"Bullet",
