@@ -7,3 +7,6 @@
 [submodule "Theme - Nil"]
 	path = Theme - Nil
 	url = https://github.com/nilium/st2-nil-theme.git
+[submodule "MarkdownEditing"]
+	path = MarkdownEditing
+	url = ../MarkdownEditing.git
