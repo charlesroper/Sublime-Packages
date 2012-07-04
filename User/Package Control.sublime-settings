@@ -1,10 +1,11 @@
 {
-	"auto_upgrade_last_run": 1341247710,
+	"auto_upgrade_last_run": 1341337567,
 	"installed_packages":
 	[
 		"AutoFileName",
 		"BracketHighlighter",
 		"Bullet",
+		"ColorPicker",
 		"Gist",
 		"Git",
 		"LineEndings",
@@ -13,6 +14,7 @@
 		"Origami",
 		"Package Control",
 		"PowerShell",
+		"Sass",
 		"SCSS",
 		"SideBarEnhancements",
 		"SideBarGit",
