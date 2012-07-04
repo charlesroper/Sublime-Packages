@@ -9,6 +9,6 @@
     "curly_style" : "underline",
     "round_style" : "outline",
     "square_style": "outline",
-    "angle_style" : "outline",
+    "angle_style" : "underline",
     "tag_style"   : "none"
 }
