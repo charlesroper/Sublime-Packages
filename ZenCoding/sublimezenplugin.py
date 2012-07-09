@@ -413,31 +413,58 @@ class ZenListener(sublime_plugin.EventListener):
             try:            result = expand_abbr(abbr)
             except          ZenInvalidAbbreviation: return None
             if result:
-                return result
+                return abbr, result
 
     def on_query_context(self, view, key, op, operand, match_all):
-        if key == "return_false":
-            return False
-
-        elif key == 'is_zen':
+        # TODO: is_zen, honour match_all, so that the extracted prefix is
+        # the same on all sides
+        if key == 'is_zen':
             debug('checking iz_zen context')
             context = ZenListener.check_context(view)
 
             if context is not None:
-                if op == sublime.OP_REGEX_MATCH:
-                    # this is a quick hack to allow the default tab binding
-                    # to work
-                    word_separators = view.settings().get('word_separators')
-                    view.settings().set('word_separators', '')
-                    sublime.set_timeout(
-                        lambda: view.settings().set (
-                                'word_separators', word_separators), 0)
-                    return False
+                abbr, result = context
+
+                if match_all == True:
+                    n = len(abbr)
+
+                    for sel in view.sel():
+                        a = view.substr(sublime.Region(sel.b-n, sel.b))
+                        if not a == abbr:
+                            return False
+
+                view.settings().set("zen_abbrev_cache", [abbr, result])
                 debug('is_zen context enabled')
                 return True
             else:
                 debug('is_zen context disabled')
                 return False
+
+
+################################################################################
+
+class ExpandZenAbbreviationOnTab(sublime_plugin.TextCommand):
+    """
+
+    This command is for when, on `<tab>`, you want to expand abbreviations in
+    contexts that on_query_completion will not, namely when the characters
+    preceding the cursor are word separators.
+
+    The default zen actions are not multi select aware.
+
+    """
+    def run(self, edit):
+        view         = self.view
+        settings     = view.settings()
+
+        abbr, result = settings.get("zen_abbrev_cache")
+        settings.erase('zen_abbrev_cache')
+
+        n            = len(abbr)
+        for sel in view.sel():
+            view.erase(edit, sublime.Region(sel.b-n, sel.b))
+
+        view.run_command('insert_snippet', {"contents": result})
 
 ################################################################################
 
@@ -445,9 +472,10 @@ class SetHtmlSyntaxAndInsertSkel(sublime_plugin.TextCommand):
     def run(self, edit, doctype=None):
         view     = self.view
         syntax   = zen_settings.get( 'default_html_syntax',
-                                     'Packages/HTML/HTML.tmlanguage' )
+                                     'Packages/HTML/HTML.tmLanguage' )
         view.set_syntax_file(syntax)
         view.run_command( 'insert_snippet',
-                          {'contents': expand_abbr('html:%s' % doctype)} )
+                {'contents': expand_abbr('html:%s' % doctype)} )
 
-################################################################################
+
+################################################################################A
