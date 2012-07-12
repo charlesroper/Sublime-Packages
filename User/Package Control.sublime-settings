@@ -1,5 +1,5 @@
 {
-	"auto_upgrade_last_run": 1341337567,
+	"auto_upgrade_last_run": 1342118840,
 	"installed_packages":
 	[
 		"AutoFileName",
@@ -14,7 +14,6 @@
 		"Origami",
 		"Package Control",
 		"PowerShell",
-		"Sass",
 		"SCSS",
 		"SideBarEnhancements",
 		"SideBarGit",
