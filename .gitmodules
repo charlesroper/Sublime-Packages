@@ -10,3 +10,6 @@
 [submodule "MarkdownEditing"]
 	path = MarkdownEditing
 	url = ../MarkdownEditing.git
+[submodule "ZenCoding"]
+	path = ZenCoding
+	url = https://github.com/sublimator/ZenCoding.git
