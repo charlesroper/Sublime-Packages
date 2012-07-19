@@ -1,8 +1,9 @@
 {
-	"color_scheme": "Packages/Color Scheme - DobDark/Dobdark Soda.tmTheme",
+	"color_scheme": "Packages/Color Scheme - DobDark/Dobdark.tmTheme",
 	"default_line_ending": "unix",
 	"draw_indent_guides": false,
 	"draw_white_space": "all",
+	"ensure_newline_at_eof_on_save": true,
 	"font_face": "Cousine",
 	"font_size": 9.0,
 	"ignored_packages":
@@ -12,6 +13,5 @@
 	"tab_size": 4,
 	"theme": "Nil.sublime-theme",
 	"translate_tabs_to_spaces": true,
-	"trim_trailing_white_space_on_save": true,
-	"ensure_newline_at_eof_on_save": true
+	"trim_trailing_white_space_on_save": true
 }
