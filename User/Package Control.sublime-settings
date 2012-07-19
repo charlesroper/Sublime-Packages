@@ -1,5 +1,5 @@
 {
-	"auto_upgrade_last_run": 1342180545,
+	"auto_upgrade_last_run": 1342715660,
 	"installed_packages":
 	[
 		"AutoFileName",
@@ -21,6 +21,7 @@
 		"SublimeLinter",
 		"Terminal",
 		"Theme - Soda",
-		"VBScript"
+		"VBScript",
+		"Wrap Plus"
 	]
 }
