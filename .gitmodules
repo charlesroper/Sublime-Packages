@@ -13,3 +13,6 @@
 [submodule "livecss"]
 	path = livecss
 	url = https://github.com/FichteFoll/livecss.git
+[submodule "ZenCoding"]
+	path = ZenCoding
+	url = git://github.com/sergeche/zencoding-sublime.git
