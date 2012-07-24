@@ -1,5 +1,5 @@
 {
-	"auto_upgrade_last_run": 1342715660,
+	"auto_upgrade_last_run": 1343122407,
 	"installed_packages":
 	[
 		"AutoFileName",
@@ -15,6 +15,7 @@
 		"Package Control",
 		"PowerShell",
 		"SCSS",
+		"SFTP",
 		"SideBarEnhancements",
 		"SideBarGit",
 		"SublimeGoogle",
