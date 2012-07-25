@@ -3,16 +3,10 @@
 	url = git@github.com:charlesroper/DobDark-Theme.git
 [submodule "ExtremeCSS"]
 	path = ExtremeCSS
-	url = https://github.com/grassator/ExtremeCSS.tmbundle.git
+	url = ssh://git@github.com/grassator/ExtremeCSS.tmbundle.git
 [submodule "Theme - Nil"]
 	path = Theme - Nil
-	url = https://github.com/nilium/st2-nil-theme.git
-[submodule "MarkdownEditing"]
-	path = MarkdownEditing
-	url = ../MarkdownEditing.git
-[submodule "livecss"]
-	path = livecss
-	url = https://github.com/FichteFoll/livecss.git
+	url = ssh://git@github.com/nilium/st2-nil-theme.git
 [submodule "ZenCoding"]
 	path = ZenCoding
 	url = ssh://git@github.com/sergeche/zencoding-sublime.git
