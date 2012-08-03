@@ -1009,7 +1009,11 @@ class SideBarDeleteCommand(sublime_plugin.WindowCommand):
 	def run(self, paths = [], confirmed = 'False'):
 
 		if confirmed == 'False' and s.get('confirm_before_deleting', True):
-			self.confirm([item.path() for item in SideBarSelection(paths).getSelectedItems()], [item.pathWithoutProject() for item in SideBarSelection(paths).getSelectedItems()])
+			if sublime.platform() == 'osx':
+				if sublime.ok_cancel_dialog('delete the selected items?'):
+					self.run(paths, 'True')
+			else:
+				self.confirm([item.path() for item in SideBarSelection(paths).getSelectedItems()], [item.pathWithoutProject() for item in SideBarSelection(paths).getSelectedItems()])
 		else:
 			try:
 				for item in SideBarSelection(paths).getSelectedItemsWithoutChildItems():
@@ -1181,3 +1185,10 @@ class SideBarOpenInNewWindowCommand(sublime_plugin.WindowCommand):
 
 	def is_visible(self, paths =[]):
 		return not s.get('disabled_menuitem_open_in_new_window')
+
+class SideBarProjectItemRemoveFolderCommand(sublime_plugin.WindowCommand):
+	def run(self, paths = []):
+		self.window.run_command('remove_folder', {"dirs":paths})
+
+	def is_enabled(self, paths =[]):
+		return SideBarSelection(paths).len() == 1 and SideBarSelection(paths).hasProjectDirectories() == True
