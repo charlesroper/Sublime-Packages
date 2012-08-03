@@ -1,5 +1,5 @@
 {
-	"auto_upgrade_last_run": 1343122407,
+	"auto_upgrade_last_run": 1344017923,
 	"installed_packages":
 	[
 		"AutoFileName",
@@ -8,6 +8,7 @@
 		"ColorPicker",
 		"Gist",
 		"Git",
+		"HTMLAttributes",
 		"LineEndings",
 		"LiveReload",
 		"Markdown Preview",
