@@ -10,6 +10,7 @@
 	[
 		""
 	],
+	"rulers": [78],
 	"tab_size": 4,
 	"theme": "Nil.sublime-theme",
 	"translate_tabs_to_spaces": true,
