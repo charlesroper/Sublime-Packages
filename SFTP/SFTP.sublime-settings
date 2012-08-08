@@ -49,4 +49,13 @@
 	//,"git_binary_path": "C:\\Program Files\\Msysgit\\bin\\git.exe"
 	//,"hg_binary_path": "C:\\Program Files\\Mercurial\\hg.exe"
 	//,"svn_binary_path": "/usr/bin/svn"
+
+	// On OS X, tabs don't instantly get rendered when opening a file, which
+	// can have the side effect of the sync_down_on_open setting not properly
+	// detecting a file open. SFTP uses a slight delay before checking to see
+	// if a file has been completely opened before syncing down. Depending on
+	// the machine, it may be necessary to tweak this value if sometimes files
+	// do not sync down on open. The number of milliseconds to wait after a
+	// file load event is triggered before checking if the file has a tab.
+	//,"osx_sync_down_on_open_delay": 500
 }
