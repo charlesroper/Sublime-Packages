@@ -10,3 +10,6 @@
 [submodule "ZenCoding"]
 	path = ZenCoding
 	url = ssh://git@github.com/sergeche/zencoding-sublime.git
+[submodule "Emmet"]
+	path = Emmet
+	url = git://github.com/sergeche/emmet-sublime.git
