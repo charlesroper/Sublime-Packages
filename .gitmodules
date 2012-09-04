@@ -7,3 +7,6 @@
 [submodule "Theme - Nil"]
 	path = Theme - Nil
 	url = ssh://git@github.com/nilium/st2-nil-theme.git
+[submodule "Emmet"]
+	path = Emmet
+	url = ssh://git@github.com/sergeche/emmet-sublime.git
