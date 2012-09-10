@@ -3,7 +3,10 @@ import desktop
 import tempfile
 import markdown2
 import os
+import sys
 import re
+
+settings = sublime.load_settings('MarkdownPreview.sublime-settings')
 
 
 def getTempMarkdownPreviewPath(view):
@@ -22,6 +25,15 @@ class MarkdownPreviewListener(sublime_plugin.EventListener):
             if os.path.isfile(temp_file):
                 # reexec markdown conversion
                 view.run_command('markdown_preview', {'target': 'disk'})
+                sublime.status_message('Markdown preview file updated')
+
+
+class MarkdownCheatsheetCommand(sublime_plugin.TextCommand):
+    """ open our markdown cheat sheet in ST2"""
+    def run(self, edit):
+        cheatsheet = os.path.join(sublime.packages_path(), 'Markdown Preview', 'sample.md')
+        self.view.window().open_file(cheatsheet)
+        sublime.status_message('Markdown cheat sheet opened')
 
 
 class MarkdownPreviewCommand(sublime_plugin.TextCommand):
@@ -63,7 +75,7 @@ class MarkdownPreviewCommand(sublime_plugin.TextCommand):
         contents = self.view.substr(region)
 
         # convert the markdown
-        markdown_html = markdown2.markdown(contents, extras=['footnotes', 'toc'])
+        markdown_html = markdown2.markdown(contents, extras=['footnotes', 'toc', 'fenced-code-blocks', 'cuddled-lists', 'code-friendly'])
 
         # postprocess the html
         markdown_html = self.postprocessor(markdown_html)
@@ -90,10 +102,23 @@ class MarkdownPreviewCommand(sublime_plugin.TextCommand):
             tmp_html.close()
             # todo : livereload ?
             if target == 'browser':
-                desktop.open(tmp_fullpath)
+                config_browser = settings.get('browser')
+                if config_browser and config_browser != 'default':
+                    cmd = '"%s" %s' % (config_browser, tmp_fullpath)
+                    if sys.platform == 'darwin':
+                        cmd = "open -a %s" % cmd
+                    print "Markdown Preview: executing", cmd
+                    result = os.system(cmd)
+                    if result != 0:
+                        sublime.error_message('cannot execute "%s" Please check your Markdown Preview settings' % config_browser)
+                    else:
+                        sublime.status_message('Markdown preview launched in %s' % config_browser)
+                else:
+                    desktop.open(tmp_fullpath)
+                    sublime.status_message('Markdown preview launched in default html viewer')
         elif target == 'sublime':
             new_view = self.view.window().new_file()
             new_edit = new_view.begin_edit()
             new_view.insert(new_edit, 0, html_contents)
             new_view.end_edit(new_edit)
-        print 'markdown converted'
+            sublime.status_message('Markdown preview launched in sublime')
