@@ -3,9 +3,11 @@ Sublime Text 2 MarkDown preview
 
 A simple ST2 plugin to help you preview your markdown files quickly in you web browser.
 
-You can use builtin [python-markdown2][0] parser (default) or use the [github markdown API][5] for the conversion.
+You can use builtin [python-markdown2][0] parser (default) or use the [github markdown API][5] for the conversion (edit your settings to select it).
 
-If you have the ST2 LivReload plugin, your browser will autorefresh the display when you save your file :)
+If you have the ST2 LiveReload plugin, your browser will autorefresh the display when you save your file :)
+
+NOTE: If you choose the GitHub API for conversion, your code will be sent through https to github for live conversion. You'll have Github flavored markdown and syntax highlighting for free.
 
 ## Installation :
 
@@ -22,14 +24,13 @@ If you have the ST2 LivReload plugin, your browser will autorefresh the display 
 
 ## Uses :
 
- - [python-markdown2][0] for markdown parsing
+ - [python-markdown2][0] for markdown parsing **OR** the GitHub markdown API.
  - [clownfart markown.css][1] for markdown styling
 
 
+## Licence :
 
-The code is available at github [https://github.com/revolunet/sublimetext-markdown-preview][2]
-
-Licence MIT : [http://revolunet.mit-license.org][4]
+The code is available at github [https://github.com/revolunet/sublimetext-markdown-preview][2] under MIT licence : [http://revolunet.mit-license.org][4]
 
  [0]: https://github.com/trentm/python-markdown2
  [1]: https://github.com/clownfart/Markdown-CSS
