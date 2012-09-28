@@ -14,6 +14,11 @@ except:
 class Object():
 	pass
 
+def expand_vars(path):
+	for k, v in os.environ.iteritems():
+		path = path.replace('%'+k+'%', v).replace('%'+k.lower()+'%', v)
+	return path
+
 class SideBarItem:
 
 	def __init__(self, path, is_directory):
@@ -37,6 +42,36 @@ class SideBarItem:
 		for directory in SideBarProject().getDirectories():
 			path = path.replace(directory, '', 1)
 		return path.replace('\\', '/')
+
+	def pathProject(self):
+		path = self.path()
+		for directory in SideBarProject().getDirectories():
+			path2 = path.replace(directory, '', 1)
+			if path2 != path:
+				return directory
+		return False
+
+	def projectURL(self, type):
+		filename = os.path.normpath(os.path.join(sublime.packages_path(), '..', 'Settings', 'SideBarEnhancements.json'))
+		if os.path.lexists(filename):
+			try:
+				import json
+				data = file(filename, 'r').read()
+				data = data.replace('\t', ' ').replace('\\', '/').replace('\\', '/').replace('//', '/').replace('//', '/').replace('http:/', 'http://').replace('https:/', 'https://')
+				data = json.loads(data, strict=False)
+
+				for path in data.keys():
+					path2 = expand_vars(path)
+					if self.path().replace('\\', '/').replace('\\', '/').replace('//', '/').replace('//', '/').find(path2.replace('\\', '/').replace('\\', '/').replace('//', '/').replace('//', '/')) == 0:
+						url = data[path][type]
+						if url:
+							if url[-1:] != '/':
+								url = url+'/'
+						return url;
+			except:
+				return False
+		else:
+			return False
 
 	def isUnderCurrentProject(self):
 		path = self.path()
