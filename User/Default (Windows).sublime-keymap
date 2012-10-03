@@ -1,23 +1,24 @@
 [
 	{ "keys": ["ctrl+alt+j"], "command": "journal"},
-	// Rebind Next and Previous Item commands in ZenCoding
-	{"args": {"action": "select_next_item"},
-	 "command": "run_zen_action",
-	 "context": [{"key": "selector",
-	              "match_all": true,
-	              "operand": "text.html, source.css, text.xml",
-	              "operator": "equal"}],
-	 "keys": ["ctrl+alt+period"]},
-	{"args": {"action": "select_previous_item"},
-	 "command": "run_zen_action",
-	 "context": [{"key": "selector",
-	              "match_all": true,
-	              "operand": "text.html, source.css, text.xml",
-	              "operator": "equal"}],
-	 "keys": ["ctrl+alt+,"]},
 
-	{ "keys": ["ctrl+alt+t"], "command": "open_terminal" },
-	{ "keys": ["ctrl+shift+alt+t"], "command": "open_terminal_project_folder" },
+	// Rebind Next and Previous Item commands in ZenCoding
+	{
+		"keys": ["ctrl+shift+t"],
+		"command": "run_emmet_action",
+		"args": {
+			"action": "match_pair_inward"
+		}
+	},
+
+	{
+		"keys": ["ctrl+alt+t"],
+		"command": "open_terminal"
+	},
+
+	{
+		"keys": ["ctrl+shift+alt+t"],
+		"command": "open_terminal_project_folder"
+	},
 
 	// Asterisk, underscore and backtick wrapping
 	{ "keys": ["*"], "command": "insert_snippet", "args": {"contents": "*${0:$SELECTION}*"}, "context":
