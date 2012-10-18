@@ -1,5 +1,6 @@
 [
 	{ "keys": ["ctrl+alt+j"], "command": "journal"},
+	{ "keys": ["ctrl+j"], "command": "join_lines" },
 
 	// Rebind Next and Previous Item commands in ZenCoding
 	{
