@@ -139,14 +139,14 @@ class StoppableWSGIServerAdapter(ServerAdapter):
         self.srv.serve_forever()
 
     def stop(self):
-        self.srv.shutdown()
+        if self.srv:
+            self.srv.shutdown()
         self.srv = None
 
 
 def bottle_run(server):
     try:
         global app
-
         log.info("Bottle v%s server starting up..." % (bottle.__version__))
         log.info("Listening on http://%s:%d/" % (server.host, server.port))
         server.run(app)
@@ -170,4 +170,5 @@ class Server(object):
         t.start()
 
     def stop(self):
+        log.info('Bottle server shuting down...')
         self.server.stop()

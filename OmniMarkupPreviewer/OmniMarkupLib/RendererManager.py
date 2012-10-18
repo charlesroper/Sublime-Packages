@@ -75,9 +75,11 @@ class RendererWorker(threading.Thread):
             log.exception("")
 
     def run(self):
-        while not self.stopping:
+        while True:
             with self.cond:
-                self.cond.wait(0.1)
+                self.cond.wait()
+                if self.stopping:
+                    break
                 if len(self.que) == 0:
                     continue
                 items = self.que.items()
@@ -87,20 +89,22 @@ class RendererWorker(threading.Thread):
 
     def stop(self):
         self.stopping = True
+        with self.cond:
+            self.cond.notify()
         self.join()
 
 
 class RendererManager(object):
     WORKER = RendererWorker()
     LANG_RE = re.compile(r"^[^\s]+(?=\s+)")
-    RENDERER_TYPES = []
+    RENDERERS = []
 
     @classmethod
     def is_renderers_enabled(cls, filename, lang):
         # filename may be None, so prevent it
         filename = filename or ""
-        for renderer_type in cls.RENDERER_TYPES:
-            if renderer_type.is_enabled(filename, lang):
+        for renderer in cls.RENDERERS:
+            if renderer.is_enabled(filename, lang):
                 return True
         return False
 
@@ -121,29 +125,50 @@ class RendererManager(object):
 
     @classmethod
     def render_text(cls, filename, lang, text):
-        for renderer_type in cls.RENDERER_TYPES:
+        for renderer in cls.RENDERERS:
             try:
-                if renderer_type.is_enabled(filename, lang):
-                    renderer = renderer_type()
-                    return renderer.render(text)
+                if renderer.is_enabled(filename, lang):
+                    return renderer.render(text, filename=filename)
             except:
-                log.exception('Exception occured while rendering using %s', renderer_type)
+                log.exception('Exception occured while rendering using %s', renderer.__name__)
         raise NotImplementedError()
 
     @classmethod
     def queue_view(cls, view, only_exists=False, immediate=False):
         buffer_id = view.buffer_id()
+        settings = view.settings()
         if only_exists and not RenderedMarkupCache.instance().exists(buffer_id):
-            return
+            # If current view is previously rendered, then ignore 'only_exists'
+            if not settings.get('omnimarkup_enabled', False):
+                return
+        settings.set('omnimarkup_enabled', True)
         region = sublime.Region(0, view.size())
         text = view.substr(region)
         lang = cls.get_lang_by_scope_name(view.scope_name(0))
         cls.WORKER.queue(buffer_id, view.file_name(), lang, text, immediate=immediate)
 
     @classmethod
+    def _load_renderer(cls, module_file, module_name):
+        try:
+            __import__(module_name)
+            mod = sys.modules[module_name] = reload(sys.modules[module_name])
+            # Get classes
+            classes = inspect.getmembers(mod, inspect.isclass)
+            for classname, classtype in classes:
+                # Register renderer into manager
+                if hasattr(classtype, 'IS_VALID_RENDERER__'):
+                    try:
+                        log.info('Loaded renderer: OmniMarkupLib.Renderers.%s', classname)
+                        cls.RENDERERS.append(classtype())
+                    except:
+                        log.exception('Failed to load renderer: %s', classname)
+        except:
+            log.exceptions('Failed to load renderer module: OmniMarkupLib/Renderers/%s', module_file)
+
+    @classmethod
     def load_renderers(cls):
         # Clean old renderers
-        cls.RENDERER_TYPES[:] = []
+        cls.RENDERERS[:] = []
 
         # Add library path to sys.path
         st2_dir = LibraryPathManager.add_search_path(os.path.dirname(sys.executable))
@@ -152,28 +177,17 @@ class RendererManager(object):
         # Change the current directory to that of the module. It's not safe to just
         # add the modules directory to sys.path, as that won't accept unicode paths
         # on Windows
-        renderers_path = os.path.join(__path__, './Renderers/')
+        renderers_path = os.path.join(__path__, 'Renderers/')
         oldpath = os.getcwdu()
         os.chdir(os.path.join(__path__, '..'))
         try:
             module_list = [f
-                for f in os.listdir(renderers_path) if f.endswith("Renderer.py")
+                for f in os.listdir(renderers_path) if f.endswith('Renderer.py')
             ]
             # Load each renderer
             for module_file in module_list:
                 module_name = 'OmniMarkupLib.Renderers.' + module_file[:-3]
-                try:
-                    log.info("Loading renderer: %s", module_name)
-                    __import__(module_name)
-                    mod = sys.modules[module_name] = reload(sys.modules[module_name])
-                    # Get classes
-                    classes = inspect.getmembers(mod, inspect.isclass)
-                    for classname, classtype in classes:
-                        # Register renderer into manager
-                        if hasattr(classtype, 'IS_VALID_RENDERER__'):
-                            cls.RENDERER_TYPES.append(classtype)
-                except:
-                    log.exception("Failed to load renderer: %s", module_name)
+                cls._load_renderer(module_file, module_name)
 
         finally:
             # Restore the current directory
@@ -181,6 +195,8 @@ class RendererManager(object):
             LibraryPathManager.remove_search_path(libs_dir)
             # Clean sys path for library loading
             LibraryPathManager.remove_search_path(st2_dir)
+
+        #log.info("%d rendere(s) loaded successfully", cls.RENDERERS)
 
 
 RendererManager.WORKER.daemon = True

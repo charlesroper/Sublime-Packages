@@ -20,12 +20,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import sys
+import types
 import webbrowser
 import threading
 import time
 import sublime
 import sublime_plugin
 from functools import partial
+
+# Reloading modules
+for key in sys.modules.keys():
+    if key.startswith('OmniMarkupLib'):
+        try:
+            mod = sys.modules[key]
+            if type(mod) is types.ModuleType:
+                reload(mod)
+        except:
+            pass
+
+import OmniMarkupLib.LinuxModuleChecker
+OmniMarkupLib.LinuxModuleChecker.check()
+
 from OmniMarkupLib import log
 from OmniMarkupLib.Server import Server
 from OmniMarkupLib.RendererManager import RendererManager
@@ -94,13 +110,8 @@ def reload_settings():
         sublime.status_message(__name__ + ' requires restart due to server port change')
 
 
-reload_settings()
-RendererManager.load_renderers()
-g_server = Server(g_setting.server_port)
-
-
 class DelayedViewsWorker(threading.Thread):
-    WAIT_TIMEOUT = 0.05
+    WAIT_TIMEOUT = 0.02
 
     class Entry(object):
         def __init__(self, view, filename, timeout):
@@ -130,13 +141,14 @@ class DelayedViewsWorker(threading.Thread):
 
         if preemptive:
             # Cancel pending actions
-            with self.mutex:
+            with self.cond:
                 if view_id in self.delayed_views:
                     del self.delayed_views[view_id]
+                    self.cond.notify()
             RendererManager.queue_view(view, only_exists=True)
             self.last_signaled = now
         else:
-            with self.mutex:
+            with self.cond:
                 filename = view.file_name()
                 if view_id not in self.delayed_views:
                     self.delayed_views[view_id] = self.Entry(view, filename, timeout)
@@ -145,8 +157,9 @@ class DelayedViewsWorker(threading.Thread):
                     entry.view = view
                     entry.filename = filename
                     entry.timeout = timeout
+                self.cond.notify()
 
-    def __queue_checked(self, view, filename):
+    def queue_to_renderer_manager(self, view, filename):
         view_id = view.id()
         valid_view = False
         for window in sublime.windows():
@@ -154,7 +167,7 @@ class DelayedViewsWorker(threading.Thread):
                 break
             for v in window.views():
                 if v.id() == view_id:  # Got view
-                    valid_view = view
+                    valid_view = True
                     break
 
         if not valid_view or view.is_loading() or view.file_name() != filename:
@@ -164,26 +177,37 @@ class DelayedViewsWorker(threading.Thread):
             self.last_signaled = time.time()
 
     def run(self):
-        while not self.stopping:
+        prev_time = time.time()
+        while True:
             with self.cond:
+                if self.stopping:
+                    break
                 self.cond.wait(self.WAIT_TIMEOUT)
-                if len(self.delayed_views) == 0:
-                    continue
-                for view_id in self.delayed_views.keys():
-                    o = self.delayed_views[view_id]
-                    o.timeout -= self.WAIT_TIMEOUT
-                    if o.timeout <= 0:
-                        del self.delayed_views[view_id]
-                        sublime.set_timeout(partial(self.__queue_checked, o.view, o.filename), 0)
+                if self.stopping:
+                        break
+                if len(self.delayed_views) > 0:
+                    now = time.time()
+                    diff_time = now - prev_time
+                    for view_id in self.delayed_views.keys():
+                        o = self.delayed_views[view_id]
+                        o.timeout -= min(diff_time, self.WAIT_TIMEOUT)
+                        if o.timeout <= 0:
+                            del self.delayed_views[view_id]
+                            sublime.set_timeout(partial(self.queue_to_renderer_manager,
+                                                        o.view, o.filename), 0)
+                else:
+                    # No more items, sleep
+                    self.cond.wait()
 
     def stop(self):
-        self.stopping = True
+        with self.cond:
+            self.stopping = True
+            self.cond.notify()
         self.join()
 
 
 class PluginEventListener(sublime_plugin.EventListener):
     def __init__(self):
-        self.mutex = threading.Lock()
         self.delayed_views_worker = DelayedViewsWorker()
         self.delayed_views_worker.start()
 
@@ -207,27 +231,22 @@ class PluginEventListener(sublime_plugin.EventListener):
         self.delayed_views_worker.queue(view, preemptive=True)
 
     def on_query_context(self, view, key, operator, operand, match_all):
-        if key == 'omp_is_enabled':
+        # omp_is_enabled is here for backwards compatibility
+        if key == 'omnimarkup_is_enabled' or key == 'omp_is_enabled':
             return RendererManager.has_renderer_enabled_in_view(view)
         return None
 
 
 def unload_handler():
+    print 'Unloading'
     # Cleaning up resources...
     # Stopping server
     global g_server
-    log.info('Bottle server shuting down...')
     g_server.stop()
     # Stopping renderer worker
     RendererManager.WORKER.stop()
-    # Reloading modules
-    import sys
-    import types
-    for key in sys.modules.keys():
-        if key.startswith('OmniMarkupLib'):
-            try:
-                mod = sys.modules[key]
-                if type(mod) is types.ModuleType:
-                    reload(mod)
-            except:
-                pass
+
+
+reload_settings()
+RendererManager.load_renderers()
+g_server = Server(g_setting.server_port)
