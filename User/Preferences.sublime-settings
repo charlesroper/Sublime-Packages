@@ -2,6 +2,7 @@
 	"color_scheme": "Packages/Color Scheme - DobDark/Dobdark.tmTheme",
 	"default_line_ending": "unix",
 	"detect_slow_plugins": false,
+	"dictionary": "Packages/Language - English/en_GB.dic",
 	"draw_indent_guides": true,
 	"draw_white_space": "selection",
 	"ensure_newline_at_eof_on_save": true,
