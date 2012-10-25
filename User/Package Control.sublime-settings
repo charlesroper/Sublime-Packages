@@ -4,12 +4,15 @@
 	"auto_upgrade_last_run": 1344017923,
 	"installed_packages":
 	[
+		"All Autocomplete",
 		"AutoFileName",
 		"BracketHighlighter",
 		"Bullet",
 		"Calculate",
+		"Clickable URLs",
 		"ColorPicker",
 		"Column Select",
+		"FileSystem Autocompletion",
 		"Gist",
 		"Git",
 		"HTMLAttributes",
