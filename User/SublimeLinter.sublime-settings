@@ -1,0 +1,25 @@
+{
+    /*
+        Maps language names **as listed at the beginning of the README** (but all lowercase)
+        to executables for non-built in linters. If the executable is not in the default system path,
+        or on posix systems is not in /usr/local/bin or ~/bin, then you must specify
+        the full path to the executable. Note that paths in Windows must use double
+        backslashes, for example "C:\\Program Files (x86)\\nodejs\\node.exe".
+
+        Please note that the map _keys_ do not always match the name of the
+        executable, but rather the language syntax for the executable to lint.
+
+        This is the effective default map; your mappings may override these.
+
+        "sublimelinter_executable_map":
+        {
+            "perl": "perl",
+            "php": "php",
+            "ruby": "ruby"
+        },
+    */
+    "sublimelinter_executable_map":
+    {
+        "php": "C:\\wamp\\bin\\php\\php5.3.10\\php.exe"
+    }
+}
