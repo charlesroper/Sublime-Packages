@@ -1,6 +1,7 @@
 [
 	{ "keys": ["ctrl+alt+j"], "command": "journal"},
 	{ "keys": ["ctrl+j"], "command": "join_lines" },
+	{ "keys": ["ctrl+k", "ctrl+space"], "command": "expand_selection", "args": {"to": "scope"} },
 
 	// Rebind Next and Previous Item commands in ZenCoding
 	{
