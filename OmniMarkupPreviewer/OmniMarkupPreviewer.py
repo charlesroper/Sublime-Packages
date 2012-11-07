@@ -43,33 +43,23 @@ import OmniMarkupLib.LinuxModuleChecker
 OmniMarkupLib.LinuxModuleChecker.check()
 
 from OmniMarkupLib import log
+from OmniMarkupLib.Setting import Setting
 from OmniMarkupLib.Server import Server
 from OmniMarkupLib.RendererManager import RendererManager
-from OmniMarkupLib.Common import RenderedMarkupCache
+from OmniMarkupLib.Common import Singleton, RenderedMarkupCache
 
-
-class Setting(object):
-    def __init__(self):
-        self.server_port = 51004
-        self.refresh_on_modified = True
-        self.refresh_on_modified_delay = 500
-        self.refresh_on_saved = True
-        self.refresh_on_loaded = True
-
-
-g_setting = Setting()
-g_server = None
+try:
+    from OmniMarkupLib import OnDemandDownloader
+except:
+    log.exception("Error on loading OnDemandDownloader")
 
 
 class OmniMarkupPreviewCommand(sublime_plugin.TextCommand):
     def run(self, edit, immediate=True):
-        RendererManager.queue_view(self.view, immediate=True)
-        # Open browser
-        try:
-            global g_setting
-            webbrowser.open('http://localhost:%d/view/%d' % (g_setting.server_port, self.view.buffer_id()))
-        except:
-            log.exception("Error on opening web browser")
+        url = 'http://localhost:%d/view/%d' % \
+            (Setting.instance().server_port, self.view.buffer_id())
+        # Open with the default browser
+        webbrowser.open(url, new=2)
 
     def is_enabled(self):
         return RendererManager.has_renderer_enabled_in_view(self.view)
@@ -86,28 +76,6 @@ class OmniMarkupCleanCacheCommand(sublime_plugin.ApplicationCommand):
             for view in window.views():
                 keep_ids_list.append(view.buffer_id())
         storage.clean(keep_ids=set(keep_ids_list))
-
-
-def settings_changed():
-    log.info('Reload settings...')
-    reload_settings()
-
-
-def reload_settings():
-    global g_setting
-    settings = sublime.load_settings(__name__ + '.sublime-settings')
-    settings.clear_on_change(__name__)
-    settings.add_on_change(__name__, settings_changed)
-
-    old_server_port = g_setting.server_port
-    g_setting.server_port = settings.get("server_port", 51004)
-    g_setting.refresh_on_modified = settings.get("refresh_on_modified", True)
-    g_setting.refresh_on_modified_delay = settings.get("refresh_on_modified_delay", 500)
-    g_setting.refresh_on_saved = settings.get("refresh_on_saved", True)
-    g_setting.refresh_on_loaded = settings.get("refresh_on_loaded", True)
-    # Show status on server port change
-    if g_setting.server_port != old_server_port:
-        sublime.status_message(__name__ + ' requires restart due to server port change')
 
 
 class DelayedViewsWorker(threading.Thread):
@@ -215,18 +183,18 @@ class PluginEventListener(sublime_plugin.EventListener):
         self.delayed_views_worker.stop()
 
     def on_load(self, view):
-        if view.is_scratch() or not g_setting.refresh_on_loaded:
+        if view.is_scratch() or not Setting.instance().refresh_on_loaded:
             return
         self.delayed_views_worker.queue(view, preemptive=True)
 
     def on_modified(self, view):
-        if view.is_scratch() or not g_setting.refresh_on_modified:
+        if view.is_scratch() or not Setting.instance().refresh_on_modified:
             return
         self.delayed_views_worker.queue(view, preemptive=False,
-                                        timeout=float(g_setting.refresh_on_modified_delay) / 1000)
+                                        timeout=float(Setting.instance().refresh_on_modified_delay) / 1000)
 
     def on_post_save(self, view):
-        if view.is_scratch() or not g_setting.refresh_on_saved:
+        if view.is_scratch() or not Setting.instance().refresh_on_saved:
             return
         self.delayed_views_worker.queue(view, preemptive=True)
 
@@ -236,17 +204,72 @@ class PluginEventListener(sublime_plugin.EventListener):
             return RendererManager.has_renderer_enabled_in_view(view)
         return None
 
+g_server = None
+
+
+@Singleton
+class PluginManager(object):
+    def __init__(self):
+        setting = Setting.instance()
+        self.on_setting_changing(setting)
+
+    def on_setting_changing(self, setting):
+        self.old_server_host = setting.server_host
+        self.old_server_port = setting.server_port
+        self.old_ajax_polling_interval = setting.ajax_polling_interval
+        self.old_html_template_name = setting.html_template_name
+
+    def on_setting_changed(self, setting):
+        PLUGIN_NAME = __name__
+        if (setting.ajax_polling_interval != self.old_ajax_polling_interval or
+            setting.html_template_name != self.old_html_template_name):
+            sublime.status_message(PLUGIN_NAME + ' requires browser reload to apply changes')
+
+        need_server_restart = (
+            (setting.server_host != self.old_server_host) or
+            (setting.server_port != self.old_server_port)
+        )
+        if need_server_restart:
+            self.restart_server()
+
+        self.try_download_mathjax()
+
+    def subscribe_setting_events(self):
+        Setting.instance().subscribe('changing', self.on_setting_changing)
+        Setting.instance().subscribe('changed', self.on_setting_changed)
+
+    def restart_server(self):
+        global g_server
+        if g_server is not None:
+            self.stop_server()
+        setting = Setting.instance()
+        g_server = Server(host=setting.server_host, port=setting.server_port)
+
+    def stop_server(self):
+        global g_server
+        if g_server is not None:
+            g_server.stop()
+            g_server = None
+
+    def try_download_mathjax(self, setting=None):
+        if setting is None:
+            setting = Setting.instance()
+        if setting.mathjax_enabled:
+            OnDemandDownloader.on_demand_download_mathjax()
+
 
 def unload_handler():
-    print 'Unloading'
+    log.info('Unloading plugin...')
     # Cleaning up resources...
-    # Stopping server
-    global g_server
-    g_server.stop()
+    PluginManager.instance().stop_server()
     # Stopping renderer worker
     RendererManager.WORKER.stop()
 
 
-reload_settings()
-RendererManager.load_renderers()
-g_server = Server(g_setting.server_port)
+# Setting must be the first to initialize.
+Setting.instance().init()
+PluginManager.instance().subscribe_setting_events()
+RendererManager.init()
+RendererManager.WORKER.start()
+PluginManager.instance().restart_server()
+PluginManager.instance().try_download_mathjax()

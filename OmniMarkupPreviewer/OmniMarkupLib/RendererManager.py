@@ -24,11 +24,14 @@ import sys
 import os
 import os.path
 import re
+import base64
+from urlparse import urlparse
 import log
 import threading
 import inspect
 import sublime
-from Common import RenderedMarkupCache, RenderedMarkupCacheEntry
+from Setting import Setting
+from Common import RWLock, RenderedMarkupCache, RenderedMarkupCacheEntry
 import LibraryPathManager
 
 
@@ -37,18 +40,17 @@ __path__ = os.path.dirname(__file__)
 
 
 class WorkerQueueItem(object):
-    def __init__(self, timestamp=0, fullpath='', lang='', text=''):
+    def __init__(self, timestamp=0, fullpath='untitled', lang='', text=''):
         self.timestamp = timestamp
-        self.fullpath = fullpath
+        self.fullpath = fullpath or 'untitled'
         self.lang = lang
         self.text = text
 
 
 class RendererWorker(threading.Thread):
-    def __init__(self):
+    def __init__(self, mutex):
         threading.Thread.__init__(self)
-        self.mutex = threading.Lock()
-        self.cond = threading.Condition(self.mutex)
+        self.cond = threading.Condition(mutex)
         self.que = {}
         self.stopping = False
 
@@ -66,7 +68,7 @@ class RendererWorker(threading.Thread):
             # Render text and save to cache
             filename = os.path.basename(item.fullpath)
             dirname = os.path.dirname(item.fullpath)
-            html_part = RendererManager.render_text(filename, item.lang, item.text)
+            html_part = RendererManager.render_text(item.fullpath, item.lang, item.text)
             entry = RenderedMarkupCacheEntry(filename=filename, dirname=dirname, html_part=html_part)
             RenderedMarkupCache.instance().set_entry(buffer_id, entry)
         except NotImplementedError:
@@ -95,17 +97,21 @@ class RendererWorker(threading.Thread):
 
 
 class RendererManager(object):
-    WORKER = RendererWorker()
+    MUTEX = threading.Lock()
+    RW_LOCK = RWLock(MUTEX)
+
+    WORKER = RendererWorker(MUTEX)
     LANG_RE = re.compile(r"^[^\s]+(?=\s+)")
     RENDERERS = []
 
     @classmethod
-    def is_renderers_enabled(cls, filename, lang):
+    def has_any_valid_renderer(cls, filename, lang):
         # filename may be None, so prevent it
         filename = filename or ""
-        for renderer in cls.RENDERERS:
-            if renderer.is_enabled(filename, lang):
-                return True
+        with cls.RW_LOCK.readlock:
+            for renderer_classname, renderer in cls.RENDERERS:
+                if renderer.is_enabled(filename, lang):
+                    return True
         return False
 
     @classmethod
@@ -121,17 +127,38 @@ class RendererManager(object):
     def has_renderer_enabled_in_view(cls, view):
         filename = view.file_name()
         lang = cls.get_lang_by_scope_name(view.scope_name(0))
-        return cls.is_renderers_enabled(filename, lang)
+        return cls.has_any_valid_renderer(filename, lang)
 
     @classmethod
-    def render_text(cls, filename, lang, text):
-        for renderer in cls.RENDERERS:
-            try:
-                if renderer.is_enabled(filename, lang):
-                    return renderer.render(text, filename=filename)
-            except:
-                log.exception('Exception occured while rendering using %s', renderer.__name__)
+    def render_text(cls, fullpath, lang, text):
+        filename = os.path.basename(fullpath)
+        with cls.RW_LOCK.readlock:
+            for renderer_classname, renderer in cls.RENDERERS:
+                try:
+                    if renderer.is_enabled(filename, lang):
+                        rendered_text = renderer.render(text, filename=filename)
+                        return cls.render_text_postprocess(rendered_text, fullpath)
+                except:
+                    log.exception('Exception occured while rendering using %s', renderer_classname)
         raise NotImplementedError()
+
+    IMG_TAG_RE = re.compile('(<img [^>]*src=")([^"]+)("[^>]*>)', re.DOTALL | re.IGNORECASE | re.MULTILINE)
+
+    @classmethod
+    def render_text_postprocess(cls, rendered_text, filename):
+        dirname = os.path.dirname(filename)
+
+        def encode_image_path(m):
+            url = m.group(2)
+            o = urlparse(url)
+            if len(o.scheme) > 0:
+                # Is a valid url, returns original text
+                return m.group(0)
+            # or local file (maybe?)
+            local_path = os.path.normpath(os.path.join(dirname, url))
+            return m.group(1) + '/local/' + base64.urlsafe_b64encode(local_path) + m.group(3)
+
+        return cls.IMG_TAG_RE.sub(encode_image_path, rendered_text)
 
     @classmethod
     def queue_view(cls, view, only_exists=False, immediate=False):
@@ -148,7 +175,7 @@ class RendererManager(object):
         cls.WORKER.queue(buffer_id, view.file_name(), lang, text, immediate=immediate)
 
     @classmethod
-    def _load_renderer(cls, module_file, module_name):
+    def _load_renderer(cls, renderers, module_file, module_name):
         try:
             __import__(module_name)
             mod = sys.modules[module_name] = reload(sys.modules[module_name])
@@ -159,20 +186,19 @@ class RendererManager(object):
                 if hasattr(classtype, 'IS_VALID_RENDERER__'):
                     try:
                         log.info('Loaded renderer: OmniMarkupLib.Renderers.%s', classname)
-                        cls.RENDERERS.append(classtype())
+                        # Add both classname and its instance
+                        renderers.append((classname, classtype()))
                     except:
                         log.exception('Failed to load renderer: %s', classname)
         except:
-            log.exceptions('Failed to load renderer module: OmniMarkupLib/Renderers/%s', module_file)
+            log.exception('Failed to load renderer module: OmniMarkupLib/Renderers/%s', module_file)
 
     @classmethod
     def load_renderers(cls):
-        # Clean old renderers
-        cls.RENDERERS[:] = []
-
+        renderers = []
         # Add library path to sys.path
-        st2_dir = LibraryPathManager.add_search_path(os.path.dirname(sys.executable))
-        libs_dir = LibraryPathManager.add_search_path(os.path.join(__path__, './Renderers/libs/'))
+        LibraryPathManager.push_search_path(os.path.dirname(sys.executable))
+        LibraryPathManager.add_search_path_if_not_exists(os.path.join(__path__, './Renderers/libs/'))
 
         # Change the current directory to that of the module. It's not safe to just
         # add the modules directory to sys.path, as that won't accept unicode paths
@@ -187,17 +213,45 @@ class RendererManager(object):
             # Load each renderer
             for module_file in module_list:
                 module_name = 'OmniMarkupLib.Renderers.' + module_file[:-3]
-                cls._load_renderer(module_file, module_name)
+                cls._load_renderer(renderers, module_file, module_name)
 
         finally:
             # Restore the current directory
             os.chdir(oldpath)
-            LibraryPathManager.remove_search_path(libs_dir)
-            # Clean sys path for library loading
-            LibraryPathManager.remove_search_path(st2_dir)
+            LibraryPathManager.pop_search_path()
 
-        #log.info("%d rendere(s) loaded successfully", cls.RENDERERS)
+        with cls.RW_LOCK.writelock:
+            cls.RENDERERS = renderers
 
+    OLD_IGNORED_RENDERERS = set()
 
-RendererManager.WORKER.daemon = True
-RendererManager.WORKER.start()
+    @classmethod
+    def on_setting_changing(cls, setting):
+        cls.OLD_IGNORED_RENDERERS = setting.ignored_renderers.copy()
+
+    @classmethod
+    def on_setting_changed(cls, setting):
+        # Unload ignored renderers
+        if cls.OLD_IGNORED_RENDERERS != setting.ignored_renderers:
+            # Reload renderers, of course
+            log.info('Reloading renderers...')
+            cls.load_renderers()
+
+        with cls.RW_LOCK.readlock:
+            for renderer_classname, renderer in cls.RENDERERS:
+                key = 'renderer_options-' + renderer_classname
+                try:
+                    renderer_options = setting._sublime_settings.get(key, {})
+                    renderer.load_settings(renderer_options, setting)
+                except:
+                    log.exception('Error on setting renderer options for %s', renderer_classname)
+
+    @classmethod
+    def init(cls):
+        setting = Setting.instance()
+        setting.subscribe('changing', cls.on_setting_changing)
+        setting.subscribe('changed', cls.on_setting_changed)
+
+        cls.on_setting_changing(setting)
+        cls.load_renderers()
+        cls.on_setting_changed(setting)

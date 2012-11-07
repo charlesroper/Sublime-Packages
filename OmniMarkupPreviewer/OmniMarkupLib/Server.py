@@ -21,25 +21,50 @@ SOFTWARE.
 """
 
 import threading
+import sys
+import os
 import os.path
-import wsgiref.simple_server
+import base64
 import log
 import sublime
+import LibraryPathManager
+from Setting import Setting
 from RendererManager import RendererManager
 from Common import RenderedMarkupCache, Future
-
 
 __file__ = os.path.normpath(os.path.abspath(__file__))
 __path__ = os.path.dirname(__file__)
 
-STATIC_FILES_DIR = os.path.normpath(os.path.join(__path__, '..', 'public'))
-TEMPLATE_FILES_DIR = os.path.normpath(os.path.join(__path__, '..', 'templates'))
+DEFAULT_STATIC_FILES_DIR = os.path.normpath(os.path.join(__path__, '..', 'public'))
+USER_STATIC_FILES_DIR = os.path.normpath(os.path.join(sublime.packages_path(),
+                                         'User', 'OmniMarkupPreviewer', 'public'))
+DEFAULT_TEMPLATE_FILES_DIR = os.path.normpath(os.path.join(__path__, '..', 'templates'))
+USER_TEMPLATE_FILES_DIR = os.path.normpath(os.path.join(sublime.packages_path(),
+                                           'User', 'OmniMarkupPreviewer', 'templates'))
 
-import bottle
-from bottle import Bottle, ServerAdapter
-from bottle import static_file, request, template
 
-bottle.TEMPLATE_PATH = [TEMPLATE_FILES_DIR]
+def _mk_folders(folders):
+    for folder in folders:
+        if not os.path.exists(folder):
+            try:
+                os.makedirs(folder)
+            except:
+                pass
+
+_mk_folders([USER_STATIC_FILES_DIR, USER_TEMPLATE_FILES_DIR])
+
+LibraryPathManager.push_search_path(os.path.dirname(sys.executable))
+LibraryPathManager.push_search_path(os.path.join(__path__, 'libs'))
+try:
+    from cherrypy import wsgiserver
+    import bottle
+    from bottle import Bottle, ServerAdapter
+    from bottle import static_file, request, template
+finally:
+    LibraryPathManager.pop_search_path()
+    LibraryPathManager.pop_search_path()
+
+bottle.TEMPLATE_PATH = [USER_TEMPLATE_FILES_DIR, DEFAULT_TEMPLATE_FILES_DIR]
 
 
 # Create a new app stack
@@ -49,13 +74,26 @@ app = Bottle()
 @app.route('/public/<filepath:path>')
 def handler_public(filepath):
     """ Serving static files """
-    global STATIC_FILES_DIR
-    return static_file(filepath, root=STATIC_FILES_DIR)
+    global DEFAULT_STATIC_FILES_DIR
+    # User static files have a higher priority
+    if os.path.exists(os.path.join(USER_STATIC_FILES_DIR, filepath)):
+        return static_file(filepath, root=USER_STATIC_FILES_DIR)
+    return static_file(filepath, root=DEFAULT_STATIC_FILES_DIR)
+
+
+@app.route('/local/<base64_encoded_path>')
+def handler_local(base64_encoded_path):
+    """ Serving local files """
+    fullpath = base64.urlsafe_b64decode(base64_encoded_path)
+    basename = os.path.basename(fullpath)
+    dirname = os.path.dirname(fullpath)
+    return static_file(basename, root=dirname)
 
 
 @app.post('/api/query')
 def handler_api_query():
     """ Querying for updates """
+    entry = None
     try:
         obj = request.json
         buffer_id = obj['buffer_id']
@@ -63,26 +101,30 @@ def handler_api_query():
 
         storage = RenderedMarkupCache.instance()
         entry = storage.get_entry(buffer_id)
-
-        if entry.timestamp == timestamp:
-            return {
-                'timestamp': entry.timestamp,
-                'filename': None,
-                'dirname': None,
-                'html_part': None
-            }
-        return {
-            'timestamp': entry.timestamp,
-            'filename': entry.filename,
-            'dirname': entry.dirname,
-            'html_part': entry.html_part
-        }
     except:
+        pass
+
+    if entry is None:
         return {
             'timestamp': -1,
             'filename': '',
             'dirname': '',
             'html_part': None
+        }
+
+    if entry.timestamp == timestamp:  # Keep old entry
+        return {
+            'timestamp': entry.timestamp,
+            'filename': None,
+            'dirname': None,
+            'html_part': None
+        }
+    else:
+        return {
+            'timestamp': entry.timestamp,
+            'filename': entry.filename,
+            'dirname': entry.dirname,
+            'html_part': entry.html_part
         }
 
 
@@ -103,44 +145,37 @@ def render_text_by_buffer_id(buffer_id):
 
 @app.route('/view/<buffer_id:int>')
 def handler_view(buffer_id):
-    storage = RenderedMarkupCache.instance()
-    entry = storage.get_entry(buffer_id)
-    if entry is None:  # Loading text into cache by buffer_id, if not exists
-        f = Future(render_text_by_buffer_id, buffer_id)
-        sublime.set_timeout(f, 0)
-        entry = f.result()
+    # A browser refresh always get the latest result
+    f = Future(render_text_by_buffer_id, buffer_id)
+    sublime.set_timeout(f, 0)
+    entry = f.result()
     if entry is None:
         return bottle.HTTPError(404, 'buffer_id(%d) is not valid' % buffer_id)
-    return template(
-        'github', filename=entry.filename, dirname=entry.dirname,
-        buffer_id=buffer_id, timestamp=entry.timestamp, text=entry.html_part
-    )
+    return template(Setting.instance().html_template_name,
+                    buffer_id=buffer_id,
+                    ajax_polling_interval=Setting.instance().ajax_polling_interval,
+                    mathjax_enabled=Setting.instance().mathjax_enabled,
+                    **entry)
 
 
-class StoppableWSGIServerAdapter(ServerAdapter):
+class StoppableCherryPyServer(ServerAdapter):
     """ HACK for making a stoppable server """
-    def __int__(self, *args, **kargs):
-        ServerAdapter.__init__(self, *args, **kargs)
+    def __int__(self, *args, **kwargs):
+        super(ServerAdapter, self).__init__(*args, **kwargs)
         self.srv = None
 
-    def __del__(self):
-        if self.srv is not None:
-            self.stop()
-
     def run(self, handler):
-        class QuietHandler(wsgiref.simple_server.WSGIRequestHandler):
-            def log_request(*args, **kw):
-                pass
-        self.srv = wsgiref.simple_server.make_server(
-            self.host, self.port, handler,
-            server_class=wsgiref.simple_server.WSGIServer,
-            handler_class=QuietHandler
+        self.srv = wsgiserver.CherryPyWSGIServer(
+            (self.host, self.port), handler, numthreads=2, timeout=2, shutdown_timeout=2
         )
-        self.srv.serve_forever()
+        self.srv.start()
 
-    def stop(self):
-        if self.srv:
-            self.srv.shutdown()
+    def shutdown(self):
+        try:
+            if self.srv is not None:
+                self.srv.stop()
+        except:
+            log.exception('Error on shutting down cherrypy server')
         self.srv = None
 
 
@@ -163,12 +198,13 @@ class Server(object):
         def run(self):
             bottle_run(server=self.server)
 
-    def __init__(self, port):
-        self.server = StoppableWSGIServerAdapter(port=port)
-        t = Server.ServerThread(self.server)
-        t.daemon = True
-        t.start()
+    def __init__(self, host='127.0.0.1', port='51004'):
+        self.server = StoppableCherryPyServer(host=host, port=port)
+        self.runner = Server.ServerThread(self.server)
+        self.runner.daemon = True
+        self.runner.start()
 
     def stop(self):
         log.info('Bottle server shuting down...')
-        self.server.stop()
+        self.server.shutdown()
+        self.runner.join()

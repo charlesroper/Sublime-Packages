@@ -51,12 +51,15 @@ class Singleton(object):
 ## {{{ http://code.activestate.com/recipes/502283/ (r1)
 # Read write lock
 class RWLock(object):
-    def __init__(self):
+    def __init__(self, lock=None):
         """Initialize this read-write lock."""
 
         # Condition variable, used to signal waiters of a change in object
         # state.
-        self.__condition = Condition(Lock())
+        if lock is None:
+            self.__condition = Condition(Lock())
+        else:
+            self.__condition = Condition(lock)
 
         # Initialize with no writers.
         self.__writer = None
@@ -147,9 +150,10 @@ class RWLock(object):
                     # else also wants to upgrade, there is no way we can do
                     # this except if one of us releases all his read locks.
                     # Signal this to user.
-                    raise ValueError(
-                        "Inevitable dead lock, denying write lock"
-                    )
+                    if timeout is not None:
+                        raise RuntimeError("Write lock upgrade would deadlock until timeout")
+                    else:
+                        raise ValueError("Inevitable dead lock, denying write lock")
                 upgradewriter = True
                 self.__upgradewritercount = self.__readers.pop(me)
             else:
@@ -289,12 +293,21 @@ def generate_timestamp():
     return str(time())
 
 
-class RenderedMarkupCacheEntry(object):
+class RenderedMarkupCacheEntry(dict):
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
     def __init__(self, timestamp=None, filename='', dirname='', html_part=''):
-        self.timestamp = timestamp or generate_timestamp()
-        self.filename = filename
-        self.dirname = dirname
-        self.html_part = html_part
+        timestamp = timestamp or generate_timestamp()
+        for name, val in locals().iteritems():
+            if name == 'self':
+                continue
+            self[name] = val
+        self['__deepcopy__'] = self.__deepcopy__
+
+    def __deepcopy__(self, memo={}):
+        return self.copy()
 
 
 @Singleton
@@ -309,28 +322,20 @@ class RenderedMarkupCache(object):
 
     def get_entry(self, buffer_id):
         with self.rwlock.readlock:
-            try:
+            if buffer_id in self.cache:
                 return self.cache[buffer_id]
-            except:
-                pass
         return None
 
     def set_entry(self, buffer_id, entry):
         with self.rwlock.writelock:
-            try:
-                self.cache[buffer_id] = entry
-            except:
-                pass
+            self.cache[buffer_id] = entry
 
     def clean(self, keep_ids=set()):
         with self.rwlock.writelock:
-            try:
-                remove_ids = set(self.cache.keys())
-                remove_ids -= keep_ids
-                if len(remove_ids) == 0:
-                    return
-                for buffer_id in remove_ids:
-                    del self.cache[buffer_id]
-                log.info("Clean buffer ids in: %s" % list(remove_ids))
-            except:
-                pass
+            remove_ids = set(self.cache.keys())
+            remove_ids -= keep_ids
+            if len(remove_ids) == 0:
+                return
+            for buffer_id in remove_ids:
+                del self.cache[buffer_id]
+            log.info("Clean buffer ids in: %s" % list(remove_ids))

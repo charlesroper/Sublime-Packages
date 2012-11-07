@@ -12,9 +12,9 @@ OmniMarkupPreviewer has builtin support following markups:
 * [reStructuredText](http://docutils.sourceforge.net/rst.html)
 * [WikiCreole](http://wikicreole.org/)
 * [Textile](http://www.textism.com/tools/textile/)
-* [Pod](http://search.cpan.org/dist/perl/pod/perlpod.pod)
-(Requires Perl >= 5.10 and can be found in `PATH`, if the perl version < 5.10, 
-Pod::Simple should be installed from CPAN.)
+* [Pod](http://search.cpan.org/dist/perl/pod/perlpod.pod) (Requires Perl >= 5.10
+  and can be found in `PATH`, if the perl version < 5.10, `Pod::Simple` should be
+  installed from `CPAN`.)
 * [RDoc](http://rdoc.sourceforge.net/) (Requires ruby in your `PATH`)
 
 
@@ -22,21 +22,25 @@ Installation
 ------------
 
 ### With the Package Control plugin
-The easiest way to install OmniMarkupPreviewer is through [Package Control](http://wbond.net/sublime_packages/package_control).
+The easiest way to install OmniMarkupPreviewer is through [Package Control].
+
+[Package Control]: http://wbond.net/sublime_packages/package_control
 
 Once you have Package Control installed, restart Sublime Text 2.
 
-1. Bring up the Command Palette (<kbd>Ctrl+Shift+P</kbd> on Windows and Linux. 
-<kbd>Command+Shift+P</kbd> on OS X).
+1. Bring up the Command Palette (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>
+   on Windows and Linux. <kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>P</kbd> on OS X).
 2. Type "Install" and select "Package Control: Install Package".
 3. Select "OmniMarkupPreviewer" from list.
 
-The advantage of using Package Control is that it will keep OmniMarkupPreviewer up to date automatically.
+The advantage of using Package Control is that it will keep OmniMarkupPreviewer
+up to date automatically.
 
 
 ### Manual Install
 **Without Git:**
-[Download](https://github.com/timonwong/OmniMarkupPreviewer) the latest source code, and extract to the Packages directory.
+[Download](https://github.com/timonwong/OmniMarkupPreviewer) the latest source
+code, and extract to the Packages directory.
 
 **With Git:**
 Type the following command in your Sublime Text 2 Packages directory:
@@ -59,20 +63,79 @@ The default key bindings for this plugin:
 
 **Windows, Linux:**
 
-* <kbd>Ctrl+Alt+O</kbd>: Preview current file.
+* <kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>O</kbd>: Preview current file.
 
 **OSX:**
 
-* <kbd>Super+Alt+O</kbd>: Preview current file.
+* <kbd>⌘</kbd>+<kbd>⌥</kbd>+<kbd>O</kbd>: Preview current file.
 
 
 ### Command Palette
 
 Open the command palette, it apperas as `OmniMarkupPreviewer: Preview Current File`.
 
+Known Issues
+------------
+
+* RDoc and Pod documents cannot be previewed utils they are saved to disk.
+
 
 What's New
 ----------
+
+v1.7 (11/07/2012)
+
+* Add option `"server_host"` for server listening address.
+* Now OmniMarkupPreviewer doesn't require restart on some settings change anymore.
+* On demand downloader for mathjax should work under Linux now (using `wget` or `curl`).
+* Unsaved textile documents can now be previewed as well.
+
+v1.6 (11/03/2012)
+
+* [MathJax] support is now added (through the `"mathjax_enabled"` option), you can
+  use `$..$` and `\(..\)` delimiters for inline math, `$$..$$` and `\[..\]` delimiters
+  for display math. [MathJax] libraries will be downloaded on demand. for more
+  information, visit [my blog](http://theo.im/blog/2012/11/03/latex-support-in-omnimarkuppreviewer/).
+* Add support to custom the behavior of markdown renderer (through the
+  `"renderer_options-MarkdownRenderer"` option).
+* Responsive width on browser width change.
+* Much better http server performance (Thanks to the [CherryPy] project).
+
+[MathJax]: http://www.mathjax.org
+[CherryPy]: http://www.cherrypy.org
+
+v1.5.1 (11/01/2012)
+
+* Fixed a bug that all renderers wouldn't work if any renderer raised exception
+  while loading.
+
+v1.5 (10/31/2012)
+
+* Images on local machine can now be displayed corectlly.
+* New `"ajax_polling_interval"` option.
+* Allow users to use their own templates.
+
+v1.4 (10/28/2012)
+
+* Code blocks from [GitHub flavored markdown] is supported now, through the
+  [Fenced Code Blocks Extension].
+* [PHP Markdown Tables] support is added, through the [Tables Extension].
+* Support strikeout extension syntax (Pandoc and GitHub) for markdown: `This ~~is deleted text.~~`
+* Added `"ignored_renderers"` option to settings, in order to ignore specific
+  markup renderers.
+
+[GitHub flavored markdown]: http://github.github.com/github-flavored-markdown/
+[Fenced Code Blocks Extension]: http://packages.python.org/Markdown/extensions/fenced_code_blocks.html
+[PHP Markdown Tables]: http://michelf.ca/projects/php-markdown/extra/#table
+[Tables Extension]: http://packages.python.org/Markdown/extensions/tables.html
+
+v1.3 (10/27/2012)
+
+* Added syntax highlight support for Markdown, through the [CodeHilite Extension].
+* Unsaved buffer can now be previewed without error.
+* Updated github template.
+
+[CodeHilite Extension]: http://packages.python.org/Markdown/extensions/code_hilite.html
 
 v1.2 (10/16/2012)
 
@@ -97,7 +160,7 @@ v1.0 (10/14/2012)
 License
 -------
 
-This plugin is using MIT License
+This plugin released under MIT License:
 
     Copyright (c) 2012 Timon Wong
 
