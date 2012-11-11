@@ -1,6 +1,6 @@
 [
     {
-        "keys": ["ctrl+alt+m"], "command": "omni_markup_preview",
+        "keys": ["ctrl+alt+o"], "command": "omni_markup_preview",
         "context": [{"key": "omnimarkup_is_enabled", "operator": "equal", "operand": ""}]
     }
 ]

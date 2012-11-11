@@ -25,15 +25,17 @@ import sys
 import os
 import os.path
 import base64
-import log
 import sublime
-import LibraryPathManager
-from Setting import Setting
-from RendererManager import RendererManager
-from Common import RenderedMarkupCache, Future
+from OmniMarkupLib import log
+from OmniMarkupLib import LibraryPathManager
+from OmniMarkupLib.Setting import Setting
+from OmniMarkupLib.RendererManager import RendererManager
+from OmniMarkupLib.Common import RenderedMarkupCache, Future
+
 
 __file__ = os.path.normpath(os.path.abspath(__file__))
 __path__ = os.path.dirname(__file__)
+
 
 DEFAULT_STATIC_FILES_DIR = os.path.normpath(os.path.join(__path__, '..', 'public'))
 USER_STATIC_FILES_DIR = os.path.normpath(os.path.join(sublime.packages_path(),
@@ -149,8 +151,12 @@ def handler_view(buffer_id):
     f = Future(render_text_by_buffer_id, buffer_id)
     sublime.set_timeout(f, 0)
     entry = f.result()
+    entry = entry or RenderedMarkupCache.instance().get_entry(buffer_id)
     if entry is None:
-        return bottle.HTTPError(404, 'buffer_id(%d) is not valid' % buffer_id)
+        return bottle.HTTPError(
+            404,
+            'buffer_id(%d) is not valid (not open or unsupported file format)' % buffer_id
+        )
     return template(Setting.instance().html_template_name,
                     buffer_id=buffer_id,
                     ajax_polling_interval=Setting.instance().ajax_polling_interval,
