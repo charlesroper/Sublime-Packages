@@ -22,12 +22,12 @@ SOFTWARE.
 
 import sys
 import os
-import os.path
 import re
 import base64
 from urlparse import urlparse
 import threading
 import inspect
+import mimetypes
 import sublime
 from OmniMarkupLib.Setting import Setting
 from OmniMarkupLib.Common import RWLock, RenderedMarkupCache, RenderedMarkupCacheEntry
@@ -37,6 +37,15 @@ from OmniMarkupLib import log
 
 __file__ = os.path.normpath(os.path.abspath(__file__))
 __path__ = os.path.dirname(__file__)
+
+
+LibraryPathManager.push_search_path(os.path.dirname(sys.executable))
+LibraryPathManager.push_search_path(os.path.join(__path__, 'libs'))
+try:
+    from bottle import template
+finally:
+    LibraryPathManager.pop_search_path()
+    LibraryPathManager.pop_search_path()
 
 
 class WorkerQueueItem(object):
@@ -130,14 +139,16 @@ class RendererManager(object):
         return cls.has_any_valid_renderer(filename, lang)
 
     @classmethod
-    def render_text(cls, fullpath, lang, text):
+    def render_text(cls, fullpath, lang, text, post_process_func=None):
+        if post_process_func is None:
+            post_process_func = cls.render_text_postprocess
         filename = os.path.basename(fullpath)
         with cls.RW_LOCK.readlock:
             for renderer_classname, renderer in cls.RENDERERS:
                 try:
                     if renderer.is_enabled(filename, lang):
                         rendered_text = renderer.render(text, filename=filename)
-                        return cls.render_text_postprocess(rendered_text, fullpath)
+                        return post_process_func(rendered_text, fullpath)
                 except:
                     log.exception('Exception occured while rendering using %s', renderer_classname)
         raise NotImplementedError()
@@ -159,6 +170,46 @@ class RendererManager(object):
             return m.group(1) + '/local/' + base64.urlsafe_b64encode(local_path) + m.group(3)
 
         return cls.IMG_TAG_RE.sub(encode_image_path, rendered_text)
+
+    @classmethod
+    def render_text_postprocess_exporting(cls, rendered_text, filename):
+        # Embedding images
+        dirname = os.path.dirname(filename)
+
+        def encode_image_path(m):
+            url = m.group(2)
+            o = urlparse(url)
+            if len(o.scheme) > 0:
+                # Is a valid url, returns original text
+                return m.group(0)
+            # or local file (maybe?)
+            local_path = os.path.normpath(os.path.join(dirname, url))
+            mime_type, _ = mimetypes.guess_type(os.path.basename(local_path))
+            if mime_type is not None:
+                data_uri = open(local_path, 'rb').read().encode('base64').replace('\n', '')
+                image_tag_src = 'data:%s;base64,%s' % (mime_type, data_uri)
+            else:
+                image_tag_src = '[Invalid mime type]'
+            return m.group(1) + image_tag_src + m.group(3)
+
+        return cls.IMG_TAG_RE.sub(encode_image_path, rendered_text)
+
+    @classmethod
+    def render_view_to_string(cls, view):
+        fullpath = view.file_name() or ''
+        lang = RendererManager.get_lang_by_scope_name(view.scope_name(0))
+        text = view.substr(sublime.Region(0, view.size()))
+        html_part = RendererManager.render_text(
+            fullpath, lang, text,
+            post_process_func=cls.render_text_postprocess_exporting
+        )
+        setting = Setting.instance()
+        return template(setting.export_options['template_name'],
+                        mathjax_enabled=setting.mathjax_enabled,
+                        filename=os.path.basename(fullpath),
+                        dirname=os.path.dirname(fullpath),
+                        html_part=html_part
+        )
 
     @classmethod
     def queue_view(cls, view, only_exists=False, immediate=False):
