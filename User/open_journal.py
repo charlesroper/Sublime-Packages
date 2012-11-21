@@ -21,7 +21,8 @@ class JournalCommand(sublime_plugin.ApplicationCommand):
                         view.replace(edit, region, "\n\n")
                     else:
                         view.insert(edit, point + 1, "\n\n")
-                    now = strftime("%H:%M", localtime())
+                    fmt = '%Y-%m-%d %H:%M'
+                    now = strftime(fmt, localtime())
                     view.insert(edit, view.size(), "### %s\n\n" % now)
                     view.end_edit(edit)
                     view.sel().clear()
