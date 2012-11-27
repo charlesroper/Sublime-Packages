@@ -16,3 +16,4 @@ Colorized-*.tmTheme
 /Desktop.ini
 /*.sync.db*
 /*.sublime-workspace
+SFTP.errors.log
