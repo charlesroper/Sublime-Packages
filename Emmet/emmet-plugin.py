@@ -137,6 +137,10 @@ def should_handle_tab_key():
 	view = active_view()
 	scopes = settings.get('disabled_single_snippet_for_scopes', None)
 	cur_scope = view.syntax_name(view.sel()[0].begin())
+
+	if sublime.score_selector(cur_scope, 'source.css'):
+		return True
+
 	if not scopes or not sublime.score_selector(cur_scope, scopes):
 		return True
 
@@ -293,7 +297,7 @@ class TabExpandHandler(sublime_plugin.EventListener):
 		if (not settings.get('disable_completions', False) and 
 			self.correct_syntax(view) and 
 			self.completion_handler(view)):
-			return None
+				return None
 
 		caret_pos = view.sel()[0].begin()
 		cur_scope = view.syntax_name(caret_pos)
@@ -477,12 +481,13 @@ class HandleEnterKey(sublime_plugin.TextCommand):
 		elif 'source.' not in scope:
 			# checking a special case: caret right after opening tag,
 			# but not exactly between pairs
-			if view.substr(sublime.Region(caret_pos - 1, caret_pos)) == '>':
-				line_range = view.line(caret_pos)
-				line = view.substr(sublime.Region(line_range.begin(), caret_pos)) or ''
-				if re.search(r'<\w+\:?[\w\-]*(?:\s+[\w\:\-]+\s*=\s*([\'"]).*?\1)*\s*>$', line) is not None:
-					snippet = '\n\t${0}'
+			line_range = view.line(caret_pos)
+			line = view.substr(sublime.Region(line_range.begin(), caret_pos)) or ''
 
+			m = re.search(r'<(\w+\:?[\w\-]*)(?:\s+[\w\:\-]+\s*=\s*([\'"]).*?\2)*\s*>\s*$', line)
+			if m and m.group(1).lower() not in settings.get('empty_elements', '').split():
+				snippet = '\n\t${0}'
+		
 		view.run_command('insert_snippet', {'contents': snippet})
 
 
