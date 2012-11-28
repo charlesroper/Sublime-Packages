@@ -3,15 +3,6 @@
 	{ "keys": ["ctrl+j"], "command": "join_lines" },
 	{ "keys": ["ctrl+k", "ctrl+space"], "command": "expand_selection", "args": {"to": "scope"} },
 
-	// Rebind Next and Previous Item commands in ZenCoding
-	{
-		"keys": ["ctrl+shift+t"],
-		"command": "run_emmet_action",
-		"args": {
-			"action": "match_pair_inward"
-		}
-	},
-
 	{
 		"keys": ["ctrl+alt+t"],
 		"command": "open_terminal"
