@@ -145,7 +145,7 @@ def should_handle_tab_key():
 		return True
 
 	abbr = ctx.js().locals.pyExtractAbbreviation()
-	if not re.match(r'^\w+$', abbr):
+	if not re.match(r'^[\w\:]+$', abbr):
 		# it's a complex expression
 		return True
 
@@ -316,10 +316,10 @@ class TabExpandHandler(sublime_plugin.EventListener):
 		return run_action(lambda i, sel: ctx.js().locals.pyRunAction('expand_abbreviation'))
 
 	def on_query_completions(self, view, prefix, locations):
-		if view.match_selector(locations[0], "source.css - meta.selector.css - meta.property-value.css") and check_context():
+		if view.match_selector(locations[0], settings.get('css_completions_scope', '')) and check_context():
 			l = []
 			if settings.get('show_css_completions', False):
-				completions = ctx.js().locals.pyGetCSSCompletions('css')
+				completions = ctx.js().locals.pyGetCSSCompletions()
 				if completions:
 					for p in completions:
 						l.append(('%s\t%s' % (p['k'], p['label']), p['v']))
@@ -465,40 +465,32 @@ class ExpandAsYouType(WrapAsYouType):
 	input_message = "Enter Abbreviation: "
 
 	def setup(self):
+		view = active_view()
+		# adjust selection to non-space bounds
+		sels = []
+		for s in view.sel():
+			text = view.substr(s)
+			a = s.a + len(text) - len(text.lstrip())
+			b = s.b - len(text) + len(text.rstrip())
+
+			sels.append(sublime.Region(a, b))
+
+		view.sel().clear()
+		for s in sels:
+			view.sel().add(s)
+			
 		self.remember_sels(active_view())
 
 
-class HandleEnterKey(sublime_plugin.TextCommand):
-	def run(self, edit, **kw):
-		view = active_view()
+class EnterKeyHandler(sublime_plugin.EventListener):
+	def on_query_context(self, view, key, op, operand, match_all):
+		if key != 'clear_fields_on_enter_key':
+			return None
+
 		if settings.get('clear_fields_on_enter_key', False):
 			view.run_command('clear_fields')
 
-		snippet = '\n${0}'
-
-		if len(view.sel()) > 1:
-			return view.run_command('insert_snippet', {'contents': snippet})
-
-		# let's see if we have to insert formatted linebreak
-		caret_pos = view.sel()[0].begin()
-		scope = view.syntax_name(caret_pos)
-		if sublime.score_selector(scope, settings.get('formatted_linebreak_scopes', '')):
-			snippet = '\n\t${0}\n'
-
-		# Looks like ST2 has buggy scope matcher: sometimes it will call
-		# this action even if context selector forbids that.
-		# Thus, we have to manually filter it.
-		elif 'source.' not in scope:
-			# checking a special case: caret right after opening tag,
-			# but not exactly between pairs
-			line_range = view.line(caret_pos)
-			line = view.substr(sublime.Region(line_range.begin(), caret_pos)) or ''
-
-			m = re.search(r'<(\w+\:?[\w\-]*)(?:\s+[\w\:\-]+\s*=\s*([\'"]).*?\2)*\s*>\s*$', line)
-			if m and m.group(1).lower() not in settings.get('empty_elements', '').split():
-				snippet = '\n\t${0}'
-		
-		view.run_command('insert_snippet', {'contents': snippet})
+		return True
 
 
 class RenameTag(sublime_plugin.TextCommand):
