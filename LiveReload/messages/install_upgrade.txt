@@ -4,10 +4,6 @@ Please be sure to restart Sublime Text 2 to start using this new version. For mo
 
 New Features
  - Support v2 of protocol
- - Plugin API(you can write your own plugins)
- - Plugins:
-  * Simple reload, demostrates simple reloading
-  * Markdown preview, demonstrates new JS api pluigns, with two-way communication
-  * Build plugin, demonstrates simple callback operation via native call
-  * Chrome remote CSS edit plugin(You edit CSS in google chrome and it gets reflected back in SM2)
 
+Bugs:
+ - Potential security vulnerability with plugin https://github.com/dz0ny/LiveReload-sublimetext2/issues/7
