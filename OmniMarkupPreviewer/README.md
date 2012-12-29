@@ -84,11 +84,15 @@ Available OmniMarkupPreviewer commands in the command palette:
 Known Issues
 ------------
 
-* RDoc and Pod documents cannot be previewed utils they are saved to disk.
+* RDoc and Pod documents cannot be previewed until saved.
 
 
 What's New
 ----------
+
+v1.11 (12/24/2012)
+
+* Fix incorrect auto-scrolling behavior while pages contain images or mathjax equations.
 
 v1.10 (11/22/2012)
 
