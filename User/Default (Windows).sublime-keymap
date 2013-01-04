@@ -1,17 +1,10 @@
 [
-	{ "keys": ["ctrl+alt+j"], "command": "journal"},
-	{ "keys": ["ctrl+j"], "command": "join_lines" },
+	{ "keys": ["ctrl+alt+j"],           "command": "journal"},
+	{ "keys": ["ctrl+j"],               "command": "join_lines" },
 	{ "keys": ["ctrl+k", "ctrl+space"], "command": "expand_selection", "args": {"to": "scope"} },
-
-	{
-		"keys": ["ctrl+alt+t"],
-		"command": "open_terminal"
-	},
-
-	{
-		"keys": ["ctrl+shift+alt+t"],
-		"command": "open_terminal_project_folder"
-	},
+	{ "keys": ["ctrl+alt++shift+o"],       "command": "open_url" },
+	{ "keys": ["ctrl+alt+t"],           "command": "open_terminal" },
+	{ "keys": ["ctrl+shift+alt+t"],     "command": "open_terminal_project_folder" },
 
 	// Asterisk, underscore and backtick wrapping
 	{ "keys": ["*"], "command": "insert_snippet", "args": {"contents": "*${0:$SELECTION}*"}, "context":
