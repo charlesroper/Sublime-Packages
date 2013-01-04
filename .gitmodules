@@ -4,3 +4,6 @@
 [submodule "ExtremeCSS"]
 	path = ExtremeCSS
 	url = ssh://git@github.com/grassator/ExtremeCSS.tmbundle.git
+[submodule "LiveReload"]
+	path = LiveReload
+	url = https://github.com/dz0ny/LiveReload-sublimetext2.git
