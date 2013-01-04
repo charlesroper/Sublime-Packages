@@ -50,7 +50,7 @@ class UrlHighlighter(sublime_plugin.EventListener):
             scope_map[scope_name] += [sublime.Region(pos, pos) for pos in range(url.a, url.b)]
 
         for scope_name in scope_map:
-            view.add_regions(u'clickable-urls ' + scope_name, scope_map[scope_name], scope_name, sublime.DRAW_EMPTY_AS_OVERWRITE)
+            view.add_regions(u'clickable-urls ' + scope_name, scope_map[scope_name], scope_name, sublime.OUTLINED)
         UrlHighlighter.scopes_for_view[view.id()] = scope_map.keys()
 
     def remove_old_highlights(self, view):
