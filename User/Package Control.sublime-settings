@@ -6,6 +6,7 @@
 	"installed_packages":
 	[
 		"All Autocomplete",
+		"Auto Semi-Colon",
 		"AutoFileName",
 		"BracketHighlighter",
 		"Bullet",
