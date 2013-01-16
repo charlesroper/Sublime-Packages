@@ -19,3 +19,4 @@ Colorized-*.tmTheme
 
 SFTP.errors.log
 !/SFTP/SFTP.pyc
+/User/SFTP.sublime-settings
