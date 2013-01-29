@@ -5,6 +5,7 @@
 	"ignore_vcs_packages": true,
 	"installed_packages":
 	[
+		"AdvancedNewFile",
 		"All Autocomplete",
 		"Auto Semi-Colon",
 		"AutoFileName",
