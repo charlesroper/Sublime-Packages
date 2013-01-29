@@ -1,0 +1,14 @@
+{
+
+    "font_size": 11,
+
+    // Additional spacing at the top of each line, in pixels
+    "line_padding_top": 3,
+
+    // Additional spacing at the bottom of each line, in pixels
+    "line_padding_bottom": 3,
+
+    "rulers": [],
+
+    "save_on_focus_lost": true
+}
