@@ -2,7 +2,7 @@
 	{ "keys": ["ctrl+alt+j"],           "command": "journal"},
 	{ "keys": ["ctrl+j"],               "command": "join_lines" },
 	{ "keys": ["ctrl+k", "ctrl+space"], "command": "expand_selection", "args": {"to": "scope"} },
-	{ "keys": ["ctrl+alt++shift+o"],    "command": "open_url" },
+	{ "keys": ["ctrl+alt+shift+o"],     "command": "open_url" },
 	{ "keys": ["ctrl+alt+t"],           "command": "open_terminal" },
 	{ "keys": ["ctrl+shift+alt+t"],     "command": "open_terminal_project_folder" },
 	{ "keys": ["shift+ctrl+alt+n"],     "command": "advanced_new_file"},
