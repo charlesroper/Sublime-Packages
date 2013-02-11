@@ -2,6 +2,7 @@ import sublime
 import sublime_plugin
 import re
 import string
+from itertools import izip_longest 
 from pprint import pprint
 
 REGEX_ESCAPE_CHARS = '\\+*()[]{}^$?|:].,'
@@ -15,14 +16,33 @@ class JumpGroupIterator:
     def __init__(self, view, character, placeholder_chars):
         self.view = view
         self.all_jump_targets = self.find_all_jump_targets_in_visible_region(character)
+        self.interleaved_jump_targets = self.interleave_jump_targets_from_cursor()
         self.jump_target_index = 0
         self.placeholder_chars = placeholder_chars
 
     def __iter__(self):
         return self
 
+    def interleave_jump_targets_from_cursor(self):
+        sel = self.view.sel()[0]  # multi select not supported, doesn't really make sense
+        sel_begin = sel.begin()
+        sel_end = sel.end()
+        before = []
+        after = []
+
+        # split them into two lists radiating out from the cursor position
+        for target in self.all_jump_targets:
+            if target.begin() < sel_begin:
+                # add to beginning of list so closest targets to cursor are first
+                before.insert(0, target)
+            elif target.begin() > sel_end:
+                after.append(target)
+
+        # now interleave the two lists together into one list
+        return [target for targets in izip_longest(before, after) for target in targets if target is not None]
+
     def has_next(self):
-        return self.jump_target_index < len(self.all_jump_targets)
+        return self.jump_target_index < len(self.interleaved_jump_targets)
 
     def next(self):
         if not self.has_next():
@@ -32,7 +52,7 @@ class JumpGroupIterator:
 
         for placeholder_char in self.placeholder_chars:
             if self.has_next():
-                jump_group[placeholder_char] = self.all_jump_targets[self.jump_target_index]
+                jump_group[placeholder_char] = self.interleaved_jump_targets[self.jump_target_index]
                 self.jump_target_index += 1
             else:
                 break
@@ -99,11 +119,12 @@ class EasyMotionCommand(sublime_plugin.WindowCommand):
     jump_group_iterator = None
     current_jump_group = None
     select_text = False
+    winning_selection = None
 
     def run(self, character=None, select_text=False):
         sublime.status_message("SublimeJump to " + character)
 
-        settings = sublime.load_settings("Preferences.sublime-settings")
+        settings = sublime.load_settings("EasyMotion.sublime-settings")
 
         self.jump_target_scope = settings.get('jump_target_scope', 'string')
         placeholder_chars = settings.get('placeholder_chars', 'abcdefghijklmnopqrstuvwxyz01234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ')
@@ -148,14 +169,14 @@ class EasyMotionCommand(sublime_plugin.WindowCommand):
             winning_region = self.current_jump_group[selection]
 
         if winning_region is not None:
-            winning_point = winning_region.begin()
             if self.select_text:
-                for selection in self.active_view.sel():
-                    pprint(selection)
-                    return sublime.Region(winning_point, selection.begin())
-
+                for current_selection in self.active_view.sel():
+                    if winning_region.begin() < current_selection.begin():
+                        return sublime.Region(current_selection.end(), winning_region.begin())
+                    else:
+                        return sublime.Region(current_selection.begin(), winning_region.end())
             else:
-                return winning_point
+                return sublime.Region(winning_region.begin(), winning_region.begin())
 
     def activate_current_jump_group(self):
         '''
@@ -196,7 +217,13 @@ class EasyMotionCommand(sublime_plugin.WindowCommand):
 
     def jump_to_winning_selection(self):
         if self.winning_selection is not None:
-            view_sel = self.active_view.sel()
-            view_sel.clear()
-            view_sel.add(self.winning_selection)
-            self.active_view.show(self.winning_selection)
+            self.active_view.run_command("jump_to_winning_selection", {"begin": self.winning_selection.begin(), "end": self.winning_selection.end()})
+
+
+class JumpToWinningSelection(sublime_plugin.TextCommand):
+    def run(self, edit, begin, end):
+        winning_region = sublime.Region(long(begin), long(end))
+        sel = self.view.sel()
+        sel.clear()
+        sel.add(winning_region)
+        self.view.show(winning_region)
