@@ -19,6 +19,9 @@
 	    "context": [{ "key": "emmet_action_enabled.match_pair_outward" }]
 	},
 
+	// AdvancedNewFile
+	{ "keys": ["ctrl+k, ctrl+n"], "command": "advanced_new_file"},
+
 	// Asterisk, underscore and backtick wrapping
 	{ "keys": ["*"], "command": "insert_snippet", "args": {"contents": "*${0:$SELECTION}*"}, "context":
 		[
