@@ -7,6 +7,18 @@
 	{ "keys": ["ctrl+shift+alt+t"],     "command": "open_terminal_project_folder" },
 	{ "keys": ["shift+ctrl+alt+n"],     "command": "advanced_new_file"},
 
+	// Emmet
+	{"keys": ["ctrl+,"],
+	    "args": { "action": "match_pair_inward" },
+	    "command": "run_emmet_action",
+	    "context": [{ "key": "emmet_action_enabled.match_pair_outward" }]
+	},
+	{"keys": ["ctrl+."],
+	    "args": { "action": "match_pair_outward" },
+	    "command": "run_emmet_action",
+	    "context": [{ "key": "emmet_action_enabled.match_pair_outward" }]
+	},
+
 	// Asterisk, underscore and backtick wrapping
 	{ "keys": ["*"], "command": "insert_snippet", "args": {"contents": "*${0:$SELECTION}*"}, "context":
 		[
