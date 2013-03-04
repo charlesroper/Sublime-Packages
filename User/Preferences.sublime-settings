@@ -8,6 +8,7 @@
 	"ensure_newline_at_eof_on_save": true,
 	"font_face": "Cousine",
 	"font_size": 9.0,
+	"highlight_modified_tabs": true,
 	"ignored_packages":
 	[
 		""
