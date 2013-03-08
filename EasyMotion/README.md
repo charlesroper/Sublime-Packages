@@ -68,7 +68,7 @@ The first batch of 62 targets will look like this:
 
 ![Many Matches Second](https://raw.github.com/tednaleid/sublime-EasyMotion/add_images/images/many_matches_second.png)
 
-Keep hitting `enter` and it will continue to cycle through them in groups of 62.
+Keep hitting `enter` and it will continue to cycle through them in groups of 62.  You can also hit `shift-enter` to cycle backwards through the target groups.  Hitting the `spacebar` will exit, and so will `ctrl-c` and `escape` (but for some reason there's currently a bug that makes you hit those twice to exit).
 
 ### Select all text between cursor and any visible character
 
@@ -128,3 +128,4 @@ If the highlight color used for jump targets isn't bold enough if your color sch
 # Versions
 
 - 0.8 - released 2/3/13 - updates location of preferences to EasyMotion specific file and includes plugin specific preferences file.  You'll need to migrate preferences over into this file for them to stick.
+- 0.9 - released 2/14/13 - removes need for input panel and implements an easy_motion_mode to accept keystrokes, also lets `shift-enter` cycle backwards
