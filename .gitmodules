@@ -7,3 +7,6 @@
 [submodule "LiveReload"]
 	path = LiveReload
 	url = https://github.com/dz0ny/LiveReload-sublimetext2.git
+[submodule "MarkdownEditing"]
+	path = MarkdownEditing
+	url = git@github.com:charlesroper/MarkdownEditing.git
