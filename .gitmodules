@@ -10,3 +10,6 @@
 [submodule "MarkdownEditing"]
 	path = MarkdownEditing
 	url = git@github.com:charlesroper/MarkdownEditing.git
+[submodule "Theme - Flatland"]
+	path = Theme - Flatland
+	url = https://github.com/thinkpixellab/flatland.git
